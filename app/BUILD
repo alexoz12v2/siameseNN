@@ -9,5 +9,6 @@ py_binary(
     "@pip//absl_py",
     "@pip//keras",
     "@pip//tensorflow",
+    "//app/utils:layers"
   ],
 )

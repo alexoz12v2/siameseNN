@@ -25,12 +25,24 @@ manifest:
     ml_dtypes: ml_dtypes
     namex: namex
     numpy: numpy
+    nvidia: nvidia_nvjitlink_cu12
+    nvidia.cublas: nvidia_cublas_cu12
+    nvidia.cuda_cupti: nvidia_cuda_cupti_cu12
+    nvidia.cuda_nvcc: nvidia_cuda_nvcc_cu12
+    nvidia.cuda_nvrtc: nvidia_cuda_nvrtc_cu12
+    nvidia.cuda_runtime: nvidia_cuda_runtime_cu12
+    nvidia.cudnn: nvidia_cudnn_cu12
+    nvidia.cufft: nvidia_cufft_cu12
+    nvidia.curand: nvidia_curand_cu12
+    nvidia.cusolver: nvidia_cusolver_cu12
+    nvidia.cusparse: nvidia_cusparse_cu12
+    nvidia.nccl: nvidia_nccl_cu12
     opt_einsum: opt_einsum
     optree: optree
     packaging: packaging
     pasta: google_pasta
     pkg_resources: setuptools
-    pygments: Pygments
+    pygments: pygments
     requests: requests
     rich: rich
     setuptools: setuptools
@@ -42,10 +54,10 @@ manifest:
     termcolor: termcolor
     typing_extensions: typing_extensions
     urllib3: urllib3
-    werkzeug: Werkzeug
+    werkzeug: werkzeug
     wheel: wheel
     wrapt: wrapt
     zipp: zipp
   pip_repository:
     name: pip
-integrity: aebfa990293163d72a1411443750e743a0f8caf7ea97d456f4f2e7d96672ba6a
+integrity: fe1870df1340add602cdfb633faa108264fda586dd378c699870f540d4c2c971
