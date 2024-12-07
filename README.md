@@ -1,5 +1,8 @@
 # Progetto Rete Siamese
-
+## Packages
+### `app` package
+Modello MLP semplice, che con 100 epoche arriva al 10% di accuracy con un dataset sintetizzato.
+Non \`e il massimo, ma \`e un inizio
 
 ## Procedura di generazione Build Files e workflow con Visual Studio Code
 Si suppone che in vscode siano installate le estensioni `Python Extension Pack` e `Bazel`.
@@ -26,7 +29,19 @@ Si suppone che in vscode siano installate le estensioni `Python Extension Pack` 
    bazel run //:gazelle
    ```
    Preferisco specificare le `py_library` e quant'altro manualmente, ma eseguire il comando per 
-   sicurezza
+   sicurezza.
+   Nota che gazelle in automatico conta anche le dipendenze interne come dipendenze da risolvere nel
+   `requirements.txt`, il che non \`e esatto. Dunque, in un qualsiasi `BUILD` file, meglio se fatto
+   dopo la dichiarazione del target python, inserire `gazelle:resolve py {DEP} {TARGET_LABEL}`. Esempio
+   ```sh
+   py_binary(...)
+   # gazelle:resolve py utils //app/utils:layers
+   ```
+   Infine, al fine di far si che bazel e gazelle non scannerizzino la directory che contiene il virtual 
+   environment, possiamo inserire nel `.bazelignore` una riga del tipo `.{package}+{target}.venv`. Eg:
+   ```sh
+   .app+keras_test.venv
+   ```
 
 4. Creare un virtual environment per python il quale conterr\`a la versione specificata di python e le 
    dipendenze calcolate con gazelle, e permetter\`a a vs code di poter usare test e runner per 

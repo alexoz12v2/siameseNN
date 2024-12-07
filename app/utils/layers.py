@@ -1,6 +1,7 @@
 
 from absl import logging
 import tensorflow as tf
+import time
 import keras
 
 
@@ -51,9 +52,10 @@ class Linear(keras.layers.Layer):
         # essendo nella classe che implementa un singolo layer, qui facciamo la L2 Regularization
         # quando si fa backprop, il contenuto add_loss verra' aggiunto all'upstream loss provenienti dagli altri rami
         # del grafo di computazione
-        output = keras.ops.matmul(inputs, self.w)
+        output = keras.ops.add(keras.ops.matmul(inputs, self.w), self.b)
         gamma = 1e-2
         self.add_loss(keras.ops.sum(keras.ops.square(self.w)) * gamma)
+        self.add_loss(keras.ops.sum(keras.ops.square(self.b)) * gamma)
         return output
 
 
@@ -77,7 +79,7 @@ class MLPBlock(keras.layers.Layer):
         super().__init__()
         self.linear1 = Linear(units=32, input_dim=32)
         self.linear2 = Linear(units=32, input_dim=32)
-        self.linear3 = Linear(units=1, input_dim=32)
+        self.linear3 = Linear(units=10, input_dim=32)
 
     def call(self, inputs: tf.Tensor) -> tf.Tensor:
         x = self.linear1(inputs)
@@ -97,12 +99,18 @@ class MLPBlock(keras.layers.Layer):
 
 # i moduli fondamentali sono keras.ops, keras.activations, keras.random, keras.layers, che sono backend-agnostic
 class MLPTrainer:
-    def __init__(self, *, lr: float = 1e-3, batch_size: int = 32, epochs: int = 3):
+    def __init__(self, *, lr: float = 1e-2, batch_size: int = 32, epochs: int = 3):
         self.optimizer = keras.optimizers.Adam(learning_rate=lr)
         self.loss_fn = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
         self.batch_size = batch_size
         self.epochs = epochs
+        self.train_acc_metric = keras.metrics.SparseCategoricalAccuracy()
+        self.val_acc_metric = keras.metrics.SparseCategoricalAccuracy()
 
+    # Monitoraggio processo di training https://keras.io/guides/writing_a_custom_training_loop_in_tensorflow/#a-first-endtoend-example
+    # 1. chiama metric.update_state() dopo ogni batch
+    # 2. chiama metric.result()       quando mostri il valore corrente della metrica
+    # 3. chiama metric.reset_state()  quando devi resettare la metrica (alla fine di una epoch)
     def train(self, model: keras.layers.Layer, x_train: tf.Tensor, y_train: tf.Tensor, x_val: tf.Tensor, y_val: tf.Tensor) -> None:
         train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
         train_dataset = train_dataset.shuffle(buffer_size=1024).batch(self.batch_size)
@@ -110,20 +118,64 @@ class MLPTrainer:
         val_dataset = tf.data.Dataset.from_tensor_slices((x_val, y_val))
         val_dataset = val_dataset.shuffle(buffer_size=1024).batch(self.batch_size)
 
-        for epoch in self.epochs:
+        for epoch in range(self.epochs):
+            logging.info('-'*40)
+            logging.info(f'Start of epoch {epoch}')
+            logging.info('-'*40)
+            start_time = time.time()
             for step, (x_batch_train, y_batch_train) in enumerate(train_dataset):
+                loss_value = self._train_step(model, x_batch_train, y_batch_train)
                 # chiamare modello in gradienttape fa si che i gradienti siano automaticamente calcolati
                 # tenendo in consideraizone solo i trainable_weights con le loro add_losses
-                with tf.GradientTape() as tape:
-                    logits = model(x_batch_train, training=True)
-                    loss_value = self.loss_fn(y_batch_train, logits)
+                #with tf.GradientTape() as tape:
+                #    logits = model(x_batch_train, training=True)
+                #    loss_value = self.loss_fn(y_batch_train, logits)
 
-                # preleva i gradienti per un sottoinsieme dei trainable weights dal tape (in questo caso ho preso tutto)
-                grads = tape.gradient(loss_value, model.trainable_weights)
+                ## preleva i gradienti per un sottoinsieme dei trainable weights dal tape (in questo caso ho preso tutto)
+                #grads = tape.gradient(loss_value, model.trainable_weights)
 
-                # applicare il gradiente secondo la logica specificata dal optimizer
-                self.optimizer.apply(grads, model.trainable_weights)
+                ## applicare il gradiente secondo la logica specificata dal optimizer
+                #self.optimizer.apply(grads, model.trainable_weights)
+
+                ## aggiorna metrica
+                #self.train_acc_metric.update_state(y_batch_train, logits)
 
                 # logga ogni 100 steps
                 if step % 100 == 0:
-                    logging.info(f"")
+                    logging.info(f'Training Loss (for 1 batch) at step {step}: {float(loss_value):.4f}')
+                    logging.info(f'Seen so far: {(step + 1) * self.batch_size} samples')
+
+            # mostra la accuracy per la epoca corrente
+            train_acc = self.train_acc_metric.result()
+            logging.info(f'Training acc over epoch: {float(train_acc):.4f}')
+            
+            # resetta la metrica prima della prossima epoca
+            self.train_acc_metric.reset_state()
+
+            # validation loop alla fine di ogni epoca
+            for x_batch_val, y_batch_val in val_dataset:
+                self._test_step(model, x_batch_val, y_batch_val)
+                #val_logits = model(x_batch_val, training=False)
+                ## update metriche di validation
+                #self.val_acc_metric.update_state(y_batch_val, val_logits)
+            val_acc = self.val_acc_metric.result()
+            self.val_acc_metric.reset_state()
+            logging.info(f'Validation Acc: {float(val_acc):.4f}')
+            logging.info(f'Time Taken:     {time.time() - start_time:.2f} s')
+
+    # se le funzioni sono compilate come nodo statico di un grafo di computazione, non le puoi debuggare, pero vanno piu
+    # veloce
+    @tf.function
+    def _train_step(self, model: keras.layers.Layer, x: tf.Tensor, y: tf.Tensor) -> tf.Tensor:
+        with tf.GradientTape() as tape:
+            logits = model(x, training=True)
+            loss_value = self.loss_fn(y, logits)
+        grads = tape.gradient(loss_value, model.trainable_weights)
+        self.optimizer.apply(grads, model.trainable_weights)
+        self.train_acc_metric.update_state(y, logits)
+        return loss_value
+
+    @tf.function
+    def _test_step(self, model: keras.layers.Layer, x: tf.Tensor, y: tf.Tensor) -> None:
+        val_logits = model(x, training=False)
+        self.val_acc_metric.update_state(y, val_logits)

@@ -16,7 +16,7 @@ compile_pip_requirements(
     src = "requirements.in",
     requirements_txt = "requirements_lock.txt",
     requirements_windows = "requirements_windows.txt",
-    visibility = ["//visibility:public"]
+    visibility = ["//visibility:public"],
 )
 
 # This repository rule fetches the metadata for python packages we
@@ -55,3 +55,4 @@ gazelle(
     name = "gazelle",
     gazelle = "@rules_python_gazelle_plugin//python:gazelle_binary",
 )
+# gazelle:exclude
