@@ -1,0 +1,51 @@
+# GENERATED FILE - DO NOT EDIT!
+#
+# To update this file, run:
+#   bazel run //:gazelle_python_manifest.update
+
+manifest:
+  modules_mapping:
+    absl: absl_py
+    astunparse: astunparse
+    certifi: certifi
+    charset_normalizer: charset_normalizer
+    clang: libclang
+    flatbuffers: flatbuffers
+    gast: gast
+    google.protobuf: protobuf
+    grpc: grpcio
+    h5py: h5py
+    idna: idna
+    importlib_metadata: importlib_metadata
+    keras: keras
+    markdown: Markdown
+    markdown_it: markdown_it_py
+    markupsafe: MarkupSafe
+    mdurl: mdurl
+    ml_dtypes: ml_dtypes
+    namex: namex
+    numpy: numpy
+    opt_einsum: opt_einsum
+    optree: optree
+    packaging: packaging
+    pasta: google_pasta
+    pkg_resources: setuptools
+    pygments: Pygments
+    requests: requests
+    rich: rich
+    setuptools: setuptools
+    six: six
+    tensorboard: tensorboard
+    tensorboard_data_server: tensorboard_data_server
+    tensorflow: tensorflow
+    tensorflow_io_gcs_filesystem: tensorflow_io_gcs_filesystem
+    termcolor: termcolor
+    typing_extensions: typing_extensions
+    urllib3: urllib3
+    werkzeug: Werkzeug
+    wheel: wheel
+    wrapt: wrapt
+    zipp: zipp
+  pip_repository:
+    name: pip
+integrity: aebfa990293163d72a1411443750e743a0f8caf7ea97d456f4f2e7d96672ba6a
