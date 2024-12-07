@@ -18,7 +18,7 @@ def main(argv: list[str]) -> None:
     input = keras.random.normal(shape=(num_batches, 32))
     out = my_linear(input)
     logging.info(f"output from MLP: {tf.squeeze(out)}")
-    logging.info(f"layer.losses:    {my_linear.losses}")
+    logging.info(f"layer.losses:    {[tfloss.numpy().item() for tfloss in my_linear.losses]}")
 
 
 if __name__ == "__main__":

@@ -1,2 +1,2 @@
-from .layers import MLPBlock
+from .layers import *
 from .utils import *

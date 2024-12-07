@@ -46,7 +46,15 @@ class Linear(keras.layers.Layer):
         logging.info(f"the trainable layers are {''.join([str(weight.shape) for weight in self.trainable_weights ])}")
 
     def call(self, inputs: tf.Tensor) -> tf.Tensor:
-        return keras.ops.matmul(inputs, self.w)
+        # la funzione add_loss puo' essere chiamata dall'outer layer per iniettare nel grafo di computazione
+        # la loss sull'output, e nei singoli layers costituenti nel caso si voglia applicare della regolarizzazione
+        # essendo nella classe che implementa un singolo layer, qui facciamo la L2 Regularization
+        # quando si fa backprop, il contenuto add_loss verra' aggiunto all'upstream loss provenienti dagli altri rami
+        # del grafo di computazione
+        output = keras.ops.matmul(inputs, self.w)
+        gamma = 1e-2
+        self.add_loss(keras.ops.sum(keras.ops.square(self.w)) * gamma)
+        return output
 
 
 # esempio di una rete senza trainable parameters che accumula tensore di somme ad ogni chiamata di call
@@ -76,7 +84,46 @@ class MLPBlock(keras.layers.Layer):
         x = keras.activations.relu(x)
         x = self.linear2(x)
         x = keras.activations.relu(x)
-        return self.linear3(x)  # ritorno logits, serve sigmoide per probabilita'
+        logits = self.linear3(x)  # ritorno logits, serve sigmoide(binaria),softmax(naria) per probabilita'
+
+        # cross entropy loss
+        # self.add_loss(keras.ops.mean(keras.losses.categorical_crossentropy(
+        #    y_true=<nel ciclo di training, hai i labels a disposizione>,
+        #    y_pred=keras.ops.nn.softmax(logits),
+        # )))
+
+        return logits
 
 
 # i moduli fondamentali sono keras.ops, keras.activations, keras.random, keras.layers, che sono backend-agnostic
+class MLPTrainer:
+    def __init__(self, *, lr: float = 1e-3, batch_size: int = 32, epochs: int = 3):
+        self.optimizer = keras.optimizers.Adam(learning_rate=lr)
+        self.loss_fn = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+        self.batch_size = batch_size
+        self.epochs = epochs
+
+    def train(self, model: keras.layers.Layer, x_train: tf.Tensor, y_train: tf.Tensor, x_val: tf.Tensor, y_val: tf.Tensor) -> None:
+        train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
+        train_dataset = train_dataset.shuffle(buffer_size=1024).batch(self.batch_size)
+
+        val_dataset = tf.data.Dataset.from_tensor_slices((x_val, y_val))
+        val_dataset = val_dataset.shuffle(buffer_size=1024).batch(self.batch_size)
+
+        for epoch in self.epochs:
+            for step, (x_batch_train, y_batch_train) in enumerate(train_dataset):
+                # chiamare modello in gradienttape fa si che i gradienti siano automaticamente calcolati
+                # tenendo in consideraizone solo i trainable_weights con le loro add_losses
+                with tf.GradientTape() as tape:
+                    logits = model(x_batch_train, training=True)
+                    loss_value = self.loss_fn(y_batch_train, logits)
+
+                # preleva i gradienti per un sottoinsieme dei trainable weights dal tape (in questo caso ho preso tutto)
+                grads = tape.gradient(loss_value, model.trainable_weights)
+
+                # applicare il gradiente secondo la logica specificata dal optimizer
+                self.optimizer.apply(grads, model.trainable_weights)
+
+                # logga ogni 100 steps
+                if step % 100 == 0:
+                    logging.info(f"")
