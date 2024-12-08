@@ -2,7 +2,7 @@ import absl
 from absl import logging
 import tensorflow as tf
 import keras
-import utils
+import app.utils as utils # tutte le path sono relative a WORKSPACE
 
 def synthetic_dataset() -> dict[str, tf.Tensor]:
     # setta seed per reproducib ility https://keras.io/examples/keras_recipes/reproducibility_recipes/

@@ -55,11 +55,6 @@ go_register_toolchains(version = "1.19.4")
 gazelle_dependencies()
 
 # Remaining setup is for rules_python.
-
-# DON'T COPY_PASTE THIS.
-# Our example uses `local_repository` to point to the HEAD version of rules_python.
-# Users should instead use the installation instructions from the release they use.
-# See https://github.com/bazelbuild/rules_python/releases
 http_archive(
     name = "rules_python",
     sha256 = "4f7e2aa1eb9aa722d96498f5ef514f426c1f55161c3c9ae628c857a7128ceb07",
@@ -79,6 +74,7 @@ http_archive(
     strip_prefix = "rules_py-1.0.0",
     url = "https://github.com/aspect-build/rules_py/releases/download/v1.0.0/rules_py-v1.0.0.tar.gz",
 )
+
 # Fetches the rules_py dependencies.
 # If you want to have a different version of some dependency,
 # you should fetch it *before* calling this.
@@ -154,3 +150,12 @@ load("@rules_python_gazelle_plugin//:deps.bzl", _py_gazelle_deps = "gazelle_deps
 # This rule loads and compiles various go dependencies that running gazelle
 # for python requirements.
 _py_gazelle_deps()
+
+# Download datasets
+# generera nella cartella ~/.cache/bazel/_bazel_{USER}/{WORKSPACE dir hash}/external/cats_and_dogs (essenzialmente la cartella del bazel sandbox)
+# un WORKSPACE + una cartella "file" che contiene lo zip
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+http_file(
+    name = "cats_and_dogs",
+    url = "https://download.microsoft.com/download/3/E/1/3E1C3F21-ECDB-4869-8368-6DEBA77B919F/kagglecatsanddogs_5340.zip",
+)

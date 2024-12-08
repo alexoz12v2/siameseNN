@@ -12,5 +12,3 @@ py_binary(
         "@pip//tensorflow",
     ],
 )
-
-# gazelle:resolve py utils //app/utils:layers

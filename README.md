@@ -37,6 +37,8 @@ Si suppone che in vscode siano installate le estensioni `Python Extension Pack` 
    py_binary(...)
    # gazelle:resolve py utils //app/utils:layers
    ```
+   Ma questo succede perch\`e non hai espresso la `import` nel file python con una path relativa al `WORKSPACE`,
+   se correggi questo l'errore dovrebbe andare via.
    Infine, al fine di far si che bazel e gazelle non scannerizzino la directory che contiene il virtual 
    environment, possiamo inserire nel `.bazelignore` una riga del tipo `.{package}+{target}.venv`. Eg:
    ```sh

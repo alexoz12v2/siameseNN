@@ -1,1 +1,2 @@
 .app+keras_test.venv
+.classification_from_scratch+classification_from_scratch.venv
