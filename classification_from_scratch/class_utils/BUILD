@@ -7,4 +7,9 @@ py_library(
         "layers.py",
     ],
     visibility = ["//:__subpackages__"],
+    deps = [
+        "@pip//keras",
+        "@pip//matplotlib",
+        "@pip//tensorflow",
+    ],
 )

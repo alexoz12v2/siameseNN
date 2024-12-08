@@ -1,4 +1,3 @@
-
 from absl import logging
 import tensorflow as tf
 import time
@@ -31,7 +30,10 @@ class Linear(keras.layers.Layer):
 
         # aggiunge questa in trainable_weights
         self.w = self.add_weight(
-            shape=(input_dim, units),  # shape del tensore di parametri, default (), cioe' scalar
+            shape=(
+                input_dim,
+                units,
+            ),  # shape del tensore di parametri, default (), cioe' scalar
             initializer="random_normal",  # init casuale. default "global_uniform" (floats) o "zeros" (int, bool, ...)
             trainable=True,  # valore default
             autocast=False,  # dice se devi fare il cast del dtype nella call (default True)
@@ -42,9 +44,15 @@ class Linear(keras.layers.Layer):
             #               specifica come un variabile distributita in piu dispositivi deve essere aggregata
         )
         self.b = self.add_weight(
-            shape=(units,), initializer="zeros", trainable=True, autocast=False, name="bias"
+            shape=(units,),
+            initializer="zeros",
+            trainable=True,
+            autocast=False,
+            name="bias",
         )
-        logging.info(f"the trainable layers are {''.join([str(weight.shape) for weight in self.trainable_weights ])}")
+        logging.info(
+            f"the trainable layers are {''.join([str(weight.shape) for weight in self.trainable_weights ])}"
+        )
 
     def call(self, inputs: tf.Tensor) -> tf.Tensor:
         # la funzione add_loss puo' essere chiamata dall'outer layer per iniettare nel grafo di computazione
@@ -64,7 +72,11 @@ class ComputeSum(keras.layers.Layer):
     def __init__(self, *, input_dim: int = 32) -> None:
         super().__init__()
         self.total = self.add_weight(
-            shape=(input_dim,), initializer="zeros", trainable=False, autocast=False, name="total"
+            shape=(input_dim,),
+            initializer="zeros",
+            trainable=False,
+            autocast=False,
+            name="total",
         )
 
     def call(self, inputs: tf.Tensor) -> tf.Tensor:
@@ -86,7 +98,9 @@ class MLPBlock(keras.layers.Layer):
         x = keras.activations.relu(x)
         x = self.linear2(x)
         x = keras.activations.relu(x)
-        logits = self.linear3(x)  # ritorno logits, serve sigmoide(binaria),softmax(naria) per probabilita'
+        logits = self.linear3(
+            x
+        )  # ritorno logits, serve sigmoide(binaria),softmax(naria) per probabilita'
 
         # cross entropy loss
         # self.add_loss(keras.ops.mean(keras.losses.categorical_crossentropy(
@@ -111,7 +125,14 @@ class MLPTrainer:
     # 1. chiama metric.update_state() dopo ogni batch
     # 2. chiama metric.result()       quando mostri il valore corrente della metrica
     # 3. chiama metric.reset_state()  quando devi resettare la metrica (alla fine di una epoch)
-    def train(self, model: keras.layers.Layer, x_train: tf.Tensor, y_train: tf.Tensor, x_val: tf.Tensor, y_val: tf.Tensor) -> None:
+    def train(
+        self,
+        model: keras.layers.Layer,
+        x_train: tf.Tensor,
+        y_train: tf.Tensor,
+        x_val: tf.Tensor,
+        y_val: tf.Tensor,
+    ) -> None:
         train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
         train_dataset = train_dataset.shuffle(buffer_size=1024).batch(self.batch_size)
 
@@ -119,54 +140,58 @@ class MLPTrainer:
         val_dataset = val_dataset.shuffle(buffer_size=1024).batch(self.batch_size)
 
         for epoch in range(self.epochs):
-            logging.info('-'*40)
-            logging.info(f'Start of epoch {epoch}')
-            logging.info('-'*40)
+            logging.info("-" * 40)
+            logging.info(f"Start of epoch {epoch}")
+            logging.info("-" * 40)
             start_time = time.time()
             for step, (x_batch_train, y_batch_train) in enumerate(train_dataset):
                 loss_value = self._train_step(model, x_batch_train, y_batch_train)
                 # chiamare modello in gradienttape fa si che i gradienti siano automaticamente calcolati
                 # tenendo in consideraizone solo i trainable_weights con le loro add_losses
-                #with tf.GradientTape() as tape:
+                # with tf.GradientTape() as tape:
                 #    logits = model(x_batch_train, training=True)
                 #    loss_value = self.loss_fn(y_batch_train, logits)
 
                 ## preleva i gradienti per un sottoinsieme dei trainable weights dal tape (in questo caso ho preso tutto)
-                #grads = tape.gradient(loss_value, model.trainable_weights)
+                # grads = tape.gradient(loss_value, model.trainable_weights)
 
                 ## applicare il gradiente secondo la logica specificata dal optimizer
-                #self.optimizer.apply(grads, model.trainable_weights)
+                # self.optimizer.apply(grads, model.trainable_weights)
 
                 ## aggiorna metrica
-                #self.train_acc_metric.update_state(y_batch_train, logits)
+                # self.train_acc_metric.update_state(y_batch_train, logits)
 
                 # logga ogni 100 steps
                 if step % 100 == 0:
-                    logging.info(f'Training Loss (for 1 batch) at step {step}: {float(loss_value):.4f}')
-                    logging.info(f'Seen so far: {(step + 1) * self.batch_size} samples')
+                    logging.info(
+                        f"Training Loss (for 1 batch) at step {step}: {float(loss_value):.4f}"
+                    )
+                    logging.info(f"Seen so far: {(step + 1) * self.batch_size} samples")
 
             # mostra la accuracy per la epoca corrente
             train_acc = self.train_acc_metric.result()
-            logging.info(f'Training acc over epoch: {float(train_acc):.4f}')
-            
+            logging.info(f"Training acc over epoch: {float(train_acc):.4f}")
+
             # resetta la metrica prima della prossima epoca
             self.train_acc_metric.reset_state()
 
             # validation loop alla fine di ogni epoca
             for x_batch_val, y_batch_val in val_dataset:
                 self._test_step(model, x_batch_val, y_batch_val)
-                #val_logits = model(x_batch_val, training=False)
+                # val_logits = model(x_batch_val, training=False)
                 ## update metriche di validation
-                #self.val_acc_metric.update_state(y_batch_val, val_logits)
+                # self.val_acc_metric.update_state(y_batch_val, val_logits)
             val_acc = self.val_acc_metric.result()
             self.val_acc_metric.reset_state()
-            logging.info(f'Validation Acc: {float(val_acc):.4f}')
-            logging.info(f'Time Taken:     {time.time() - start_time:.2f} s')
+            logging.info(f"Validation Acc: {float(val_acc):.4f}")
+            logging.info(f"Time Taken:     {time.time() - start_time:.2f} s")
 
     # se le funzioni sono compilate come nodo statico di un grafo di computazione, non le puoi debuggare, pero vanno piu
     # veloce
     @tf.function
-    def _train_step(self, model: keras.layers.Layer, x: tf.Tensor, y: tf.Tensor) -> tf.Tensor:
+    def _train_step(
+        self, model: keras.layers.Layer, x: tf.Tensor, y: tf.Tensor
+    ) -> tf.Tensor:
         with tf.GradientTape() as tape:
             logits = model(x, training=True)
             loss_value = self.loss_fn(y, logits)

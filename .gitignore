@@ -480,7 +480,8 @@ TSWLatexianTemp*
 /.ijwb/
 /.project
 /.settings
-/.vscode/
+/.vscode/ # ignora tutti i files di visual studio code
+!/.vscode/launch.json # tranne il launch.json
 /bazel.iml
 # Ignore all bazel-* symlinks. There is no full list since this can change
 # based on the name of the directory bazel is cloned into.

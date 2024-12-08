@@ -5,24 +5,35 @@
 
 manifest:
   modules_mapping:
+    PIL: pillow
     absl: absl_py
     astunparse: astunparse
     certifi: certifi
     charset_normalizer: charset_normalizer
     clang: libclang
+    contourpy: contourpy
+    cycler: cycler
+    dateutil: python_dateutil
     flatbuffers: flatbuffers
+    fontTools: fonttools
     gast: gast
     google.protobuf: protobuf
     grpc: grpcio
     h5py: h5py
     idna: idna
     importlib_metadata: importlib_metadata
+    importlib_resources: importlib_resources
     keras: keras
+    kiwisolver: kiwisolver
     markdown: Markdown
     markdown_it: markdown_it_py
     markupsafe: MarkupSafe
+    matplotlib: matplotlib
     mdurl: mdurl
     ml_dtypes: ml_dtypes
+    mpl_toolkits.axes_grid1: matplotlib
+    mpl_toolkits.axisartist: matplotlib
+    mpl_toolkits.mplot3d: matplotlib
     namex: namex
     numpy: numpy
     nvidia: nvidia_nvjitlink_cu12
@@ -41,8 +52,11 @@ manifest:
     optree: optree
     packaging: packaging
     pasta: google_pasta
+    pillow.libs.libopenjp2-05423b53: pillow
     pkg_resources: setuptools
     pygments: pygments
+    pylab: matplotlib
+    pyparsing: pyparsing
     requests: requests
     rich: rich
     setuptools: setuptools
@@ -60,4 +74,4 @@ manifest:
     zipp: zipp
   pip_repository:
     name: pip
-integrity: fe1870df1340add602cdfb633faa108264fda586dd378c699870f540d4c2c971
+integrity: 4425e8ffa45e4a9706f0c8e8718b59102b2fa541ebaea82595e17031042fab7e

@@ -62,8 +62,33 @@ Si suppone che in vscode siano installate le estensioni `Python Extension Pack` 
    python usato. Se lo clicchi, vedrai che \`e disponibile in venv appena creato. Selezionalo.
    Adesso ogni volta che provi a fare run e debug verr\`a usato il venv.
 
+Piuttosto che eseguire un file python dal virtual environment, il quale ad esempio, 
+\`e equivalente al comando
+```sh
+"../siameseNN/.classification_from_scratch+classification_from_scratch.venv/bin/python" "/siameseNN/classification_from_scratch/__main__.py"
+```
+il che permette a visual studio code di attaccare il suo debugger.
+Per eseguire invece il packaged executable creato da bazel, comando
+```sh
+bazel run //classification_from_scratch:classification_from_scratch
+```
+
+Per formattare in autoamtico il file, eseguire il comando, dalla directory della repo
+```sh
+ruff format
+```
+Se non hai `ruff`, scaricarlo seguendo la [guida](https://github.com/astral-sh/ruff)
+
 Caveats:
 - Se usi un filesystem che non supporta symbolick links, come `exfat` (provato anche con 
   l'`exfat-fuse` driver), hai problemi perch\`e bazel usa molto i link simbolici, esempio per generare 
   dei puntatori di convenienza dalla directory del workspace alla sandbox bazel in cui ci sono gli 
   artefatti generati
+
+- eseguire un `__main__.py` da bazel o da python virtual environment ha una grossa differenza: la 
+  current working directory. D\`a problemi nella lettura del dataset, che tramite bazel \`e scaricato
+  nella directory del sandbox
+  Una possibile fix specifica per visual studio code pu\`o esseere la creazione di 
+  un `.vscode/launch.json`, che specifica come `"cwd"` la `${workspaceFolder}/bazel-bin` convenience
+  symlink che bazel genera.
+  Per comodit\`a, il file `.vscode/launch.json` \`e stato incluso
