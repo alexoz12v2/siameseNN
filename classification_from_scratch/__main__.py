@@ -1,7 +1,6 @@
 from absl import logging
 from absl import app
 from pathlib import Path
-import os
 import keras
 import tensorflow as tf
 import classification_from_scratch.class_utils as utils
@@ -62,12 +61,32 @@ def main(argv: list[str]) -> None:
 
     # hello
     utils.set_keras_backend("tensorflow")
+    keras.utils.set_random_seed(812)
+    tf.config.experimental.enable_op_determinism()
     logging.info(f"Active Keras Backend: {keras.backend.backend()}")
     logging.info(f"CUDA Devices: {tf.config.list_physical_devices('GPU')}")
 
     # prova a caricare il dataset
-    dataset = utils.custom_image_dataset_from_directory(data_path / "PetImages")
+    dataset, dataset_len = utils.custom_image_dataset_from_directory(
+        data_path / "PetImages",
+        use_seed=True,
+    )
+    dataset_numbatches = dataset_len // 32
     logging.info(dataset)
+    logging.info(f"images count: {dataset_len}")
+
+    # splittalo in training e validation
+    validation_size = int(0.2 * dataset_numbatches)
+
+    # splitta e fai shuffling del solo training set
+    dataset_val = dataset.take(validation_size)
+    dataset_train = dataset.skip(validation_size)
+    dataset_train = dataset_train.shuffle(
+        buffer_size=dataset_len, reshuffle_each_iteration=True
+    )
+
+    # visualizza 9 immagini
+    utils.visualize_first_9_images(dataset_train)
 
 
 if __name__ == "__main__":

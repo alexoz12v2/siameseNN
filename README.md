@@ -44,6 +44,8 @@ Si suppone che in vscode siano installate le estensioni `Python Extension Pack` 
    ```sh
    .app+keras_test.venv
    ```
+   Inoltre, le cartelle dei virtual environment devono essere anche aggiunte nel `.ruff.toml`, al
+   fine di poter usare il formatter e linter `ruff` soltanto nei files che ho effettivamente scritto
 
 4. Creare un virtual environment per python il quale conterr\`a la versione specificata di python e le 
    dipendenze calcolate con gazelle, e permetter\`a a vs code di poter usare test e runner per 
@@ -92,3 +94,6 @@ Caveats:
   un `.vscode/launch.json`, che specifica come `"cwd"` la `${workspaceFolder}/bazel-bin` convenience
   symlink che bazel genera.
   Per comodit\`a, il file `.vscode/launch.json` \`e stato incluso
+
+  Nota che ogni qual volta fai debugging, il cambio di working directory rimane nel terminale con il 
+  virtual environment
