@@ -10,7 +10,21 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/bazel-bin"
+            "cwd": "${workspaceFolder}/bazel-bin/${relativeFileDirname}/${fileDirnameBasename}.runfiles/build_file_generation_example",
+            "env": {
+                "PYTHONPATH": "${env:PYTHONPATH}:${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Python Debugger: keras_test",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/bazel-bin/${relativeFileDirname}/keras_test.runfiles/build_file_generation_example",
+            "env": {
+                "PYTHONPATH": "${env:PYTHONPATH}:${workspaceFolder}"
+            }
         }
     ]
 }

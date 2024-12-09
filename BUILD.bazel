@@ -56,3 +56,14 @@ gazelle(
     gazelle = "@rules_python_gazelle_plugin//python:gazelle_binary",
 )
 # gazelle:exclude
+
+# filegroup target per fare il packaging delle applicazioni python
+filegroup(
+    name = "app_zip",
+    srcs = [
+        "//app:keras_test", 
+        "//classification_from_scratch:classification_from_scratch",
+        "//siamese_first:siamese_first",
+    ],
+    output_group = "python_zip_file",
+)

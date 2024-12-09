@@ -22,6 +22,17 @@ specificata in input alla rule.
 
 Il codice in se invece, segue la spiegazione fornita dalla [documentazione keras](https://keras.io/examples/vision/image_classification_from_scratch/)
 
+## Strumenti Utilizzati
+- `python` e librerie specificate `requirements.in`
+- `bazel`+`bazelisk` per il processo di building e deployment
+- Vs Code come IDE
+- `ruff` come strumento di linting e formatting
+
+Tutti i dataset utilizzati possono essere scaricati in due modi
+- Tramite bazel, repository rule `http_file` -> Integrate nello zip deployato (e sono directories 
+  read only con al loro interno files read only)
+- Tramite python -> dunque scaricate a runtime
+
 ## Procedura di generazione Build Files e workflow con Visual Studio Code
 Si suppone che in vscode siano installate le estensioni `Python Extension Pack` e `Bazel`.
 1. Per prima cosa, devono essere generate versioni e hash delle dipendenze specificate nel file 
@@ -114,10 +125,15 @@ Caveats:
   current working directory. D\`a problemi nella lettura del dataset, che tramite bazel \`e scaricato
   nella directory del sandbox
   Una possibile fix specifica per visual studio code pu\`o esseere la creazione di 
-  un `.vscode/launch.json`, che specifica come `"cwd"` la `${workspaceFolder}/bazel-bin` convenience
+  un `.vscode/launch.json`, che specifica come `"cwd"` la 
+  `${workspaceFolder}/bazel-bin/${relativeFileDirname}/${fileDirnameBasename}.runfiles/{nome workspace}` convenience
   symlink che bazel genera.
   Per comodit\`a, il file `.vscode/launch.json` \`e stato incluso
-
+  In particolare, `bazel run` esegue i propri target con current working directory pari ai 
+  [runfiles](https://stackoverflow.com/questions/70256713/bazel-c-project-how-to-specify-working-directory-for-run-command) del target.
+  *Attenzione*: Questo significa che vscode riesce ad eseguire un binario il cui target name coincide con
+  la directory del bazel package, altrimenti devi aggiungere una configurazione ad hoc
+  Riferimento [VS Code](https://code.visualstudio.com/docs/editor/debugging#_launch-configurations)
   Nota che ogni qual volta fai debugging, il cambio di working directory rimane nel terminale con il 
   virtual environment
 
@@ -127,3 +143,5 @@ Caveats:
 
 - vedere meglio la libreria `pillow`, che fa un lavoro migliore nel filtrare le immagini corrotte
   (non funziona sempre comunque)
+  
+- Quando editi i files python, attenzione a editare le sorgenti e non quelli nella bazel sandbox

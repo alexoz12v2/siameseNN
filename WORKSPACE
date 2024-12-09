@@ -164,6 +164,7 @@ http_file(
 # sto usando due http_file targets, che creano un filegroup di un solo zip, piuttosto che una sola
 # http_file che crea un filegroup di 2 zips, perche la mia rule custom zip_extract gestisce labels
 # che si riferiscono ad un filegroup con un solo file
+# quello che http_file fa e' una GET all'url che gli hai specificato
 http_file(
     name = "siamese_left",
     url = "https://drive.usercontent.google.com/download?id=1jvkbTr_giSP3Ru8OwGNCg6B4PvVbcO34&authuser=0&confirm=t&uuid=9cf14af2-9021-4aa1-ae66-707c34a5b2c7&at=APvzH3r0KuHiI11CxX78ZPJk8pB1:1733746276346",
