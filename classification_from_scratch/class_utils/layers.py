@@ -155,7 +155,7 @@ def select_valid_images(
         return
 
     # i primi 3 bytes di un file jpeg
-    jpeg_magic_bytes = b"\xff\xd8\xff" 
+    jpeg_magic_bytes = b"\xff\xd8\xff"
     for subdir in input_path.iterdir():
         counter = 0
         if subdir.is_dir():
@@ -175,7 +175,9 @@ def select_valid_images(
                         counter += 1
 
 
-def visualize_first_9_images(dataset: tf.data.Dataset, *, transpose, batch_size: int) -> Figure:
+def visualize_first_9_images(
+    dataset: tf.data.Dataset, *, transpose, batch_size: int
+) -> Figure:
     fig = plt.figure(figsize=(10, 10))
     for images, labels in dataset.take(1):  # il dataset e' batched
         for i in range(min(9, batch_size)):
@@ -193,7 +195,9 @@ def visualize_first_9_images(dataset: tf.data.Dataset, *, transpose, batch_size:
     return fig
 
 
-def visualize_images(images: tf.Tensor, labels: tf.Tensor, *, transpose: bool, batch_size: int) -> None:
+def visualize_images(
+    images: tf.Tensor, labels: tf.Tensor, *, transpose: bool, batch_size: int
+) -> None:
     for i in range(min(9, batch_size)):
         ax = plt.subplot(3, 3, i + 1)
         if transpose:
@@ -262,7 +266,7 @@ def make_model(
         x = keras.layers.BatchNormalization()(x)
 
         # downsampling, o strided convolutions o max pooling
-        #* finestra a 3, stride 2, padding same -> Dimezza
+        # * finestra a 3, stride 2, padding same -> Dimezza
         x = keras.layers.MaxPooling2D(pool_size=3, strides=2, padding="same")(x)
 
         # convoluzione 1x1 per cambiare il numero di canali del blocco residuale
@@ -301,7 +305,13 @@ def make_model(
     return keras.Model(inputs=the_inputs, outputs=outputs)
 
 
-def dataset_with_pillow(data_dir: Path, image_size: Tuple[int, int], batch_size: int, validation_split: float, seed: int) -> Tuple[tf.data.Dataset, tf.data.Dataset]:
+def dataset_with_pillow(
+    data_dir: Path,
+    image_size: Tuple[int, int],
+    batch_size: int,
+    validation_split: float,
+    seed: int,
+) -> Tuple[tf.data.Dataset, tf.data.Dataset]:
     # Create DirectoryIterators
     train_iterator = train_datagen.flow_from_directory(
         data_dir,
@@ -330,18 +340,24 @@ def dataset_with_pillow(data_dir: Path, image_size: Tuple[int, int], batch_size:
     # Convert one-hot labels to class indices
     def convert_to_index(image, label):
         # Convert one-hot encoded label to index
-        label_index = tf.argmax(label, axis=-1, output_type=tf.int32)  # Get index of the 1 in the one-hot vector
+        label_index = tf.argmax(
+            label, axis=-1, output_type=tf.int32
+        )  # Get index of the 1 in the one-hot vector
         return image, label_index
 
     # Convert DirectoryIterator to tf.data.Dataset
     def iterator_to_dataset(iterator):
         # Convert each batch of data
         dataset = tf.data.Dataset.from_generator(
-            lambda: (next(iterator) for _ in iter(int, 1)),  # Infinite generator from iterator
+            lambda: (
+                next(iterator) for _ in iter(int, 1)
+            ),  # Infinite generator from iterator
             output_signature=(
-                tf.TensorSpec(shape=(None, *image_size, 3), dtype=tf.float32),  # Batch of images
+                tf.TensorSpec(
+                    shape=(None, *image_size, 3), dtype=tf.float32
+                ),  # Batch of images
                 tf.TensorSpec(shape=(None,), dtype=tf.int32),  # Batch of class indices
-            )
+            ),
         )
 
         # Apply conversion function to each batch to convert one-hot labels to indices

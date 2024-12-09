@@ -106,7 +106,9 @@ def main(argv: list[str]) -> None:
     image_size = (256, 256)
     # c'e una immagine corrotta nel dataset che non riesco a filtrare, allora ne prendo 50
     # e prego che sia corretta
-    utils.select_valid_images(input_path, output_path, return_if_exists=True, max_images=50)
+    utils.select_valid_images(
+        input_path, output_path, return_if_exists=True, max_images=50
+    )
     dataset_train, dataset_val = keras.utils.image_dataset_from_directory(
         str(output_path),
         validation_split=0.2,
@@ -117,18 +119,18 @@ def main(argv: list[str]) -> None:
     )
 
     # Parameters per apertura dataset con libreria Pillow (dovrebbe validare meglio immagini)
-    #data_dir = str(data_path / "PetImages")  # Directory path
-    #image_size = (image_size[0], image_size[1])  # Ensure tuple format
-    #batch_size = batch_size
-    #validation_split = 0.2  # 20% validation split
-    #seed = 32
-    #dataset_train, dataset_val = utils.dataset_with_pillow(
+    # data_dir = str(data_path / "PetImages")  # Directory path
+    # image_size = (image_size[0], image_size[1])  # Ensure tuple format
+    # batch_size = batch_size
+    # validation_split = 0.2  # 20% validation split
+    # seed = 32
+    # dataset_train, dataset_val = utils.dataset_with_pillow(
     #    data_dir=data_dir,
     #    image_size=image_size,
     #    batch_size=batch_size,
     #    validation_split=validation_split,
     #    seed=seed,
-    #)
+    # )
 
     logging.info("Dataset for training and validation created.")
     logging.info(f"\tTrain:      {dataset_train.cardinality()} batches of {batch_size}")
@@ -144,7 +146,9 @@ def main(argv: list[str]) -> None:
     logging.info(
         "Visualising the first 9 images of the dataset, close the window to proceed...\n"
     )
-    utils.visualize_first_9_images(dataset_train, transpose=False, batch_size=batch_size)
+    utils.visualize_first_9_images(
+        dataset_train, transpose=False, batch_size=batch_size
+    )
     plt.show(block=True)
 
     for images, labels in dataset_train.take(1):
@@ -162,17 +166,15 @@ def main(argv: list[str]) -> None:
     )
     model = utils.make_model(input_shape=image_size + (3,), num_classes=2)
 
-    # questa funzione salva il modello in {cwd}/model.png, che quindi puoi o aprire da qua o 
+    # questa funzione salva il modello in {cwd}/model.png, che quindi puoi o aprire da qua o
     # aprire manualmente, vedi nel bazel sandbox attraverso il convenience symlink `bazel-bin`
     keras.utils.plot_model(model, show_shapes=True)
     logging.info(f"you can open the `model.png` on directory {Path.cwd()}")
 
     # training del modello
-    epochs = 1 # e' lento
-    # funzioni che keras (tensorflow) richiama a fine epoca 
-    callbacks = [
-        keras.callbacks.ModelCheckpoint("save_at_{epoch}.keras")
-    ]
+    epochs = 1  # e' lento
+    # funzioni che keras (tensorflow) richiama a fine epoca
+    callbacks = [keras.callbacks.ModelCheckpoint("save_at_{epoch}.keras")]
     # prepara il modello per essere allenato, devinendogli ottimizzatore, loss, metric
     # cose che con la api con sottoclassi di keras.layers.Layers devi fare manuali
     model.compile(
@@ -180,10 +182,12 @@ def main(argv: list[str]) -> None:
         loss=keras.losses.BinaryCrossentropy(from_logits=True),
         metrics=[keras.metrics.BinaryAccuracy(name="acc")],
     )
-    logging.info(f"Started traning with Adam Optimizer, CrossEntropy loss, Binary Accuracy for {epochs} epochs")
+    logging.info(
+        f"Started traning with Adam Optimizer, CrossEntropy loss, Binary Accuracy for {epochs} epochs"
+    )
     # allena!
     model.fit(
-        dataset_train, 
+        dataset_train,
         epochs=epochs,
         callbacks=callbacks,
         validation_data=dataset_val,
@@ -193,7 +197,9 @@ def main(argv: list[str]) -> None:
     # keras.utils.load_img = tf.io.read_file + tf.io.decode_image
     img_path = next((output_path / "Cat").iterdir())
     img = keras.utils.load_img(str(img_path), target_size=image_size)
-    logging.info(f"Trying inference with image Cat/{img_path.name}, showing it. Close window to continue...")
+    logging.info(
+        f"Trying inference with image Cat/{img_path.name}, showing it. Close window to continue..."
+    )
     plt.imshow(img)
     plt.show(block=True)
 
@@ -202,8 +208,12 @@ def main(argv: list[str]) -> None:
     img_array = keras.ops.expand_dims(img_array, 0)
 
     predictions = model.predict(img_array)
-    score = float(keras.ops.sigmoid(predictions[0][0])) # tira fuori il numero da asse dei batch(None) e num_classes(1)
-    logging.info(f"This image is {100 * (1 - score):.2f}% cat and {100 * score:.2f}% dog.\n")
+    score = float(
+        keras.ops.sigmoid(predictions[0][0])
+    )  # tira fuori il numero da asse dei batch(None) e num_classes(1)
+    logging.info(
+        f"This image is {100 * (1 - score):.2f}% cat and {100 * score:.2f}% dog.\n"
+    )
 
 
 if __name__ == "__main__":
