@@ -12,6 +12,8 @@ py_library(
         "@pip//keras",
         "@pip//matplotlib",
         "@pip//numpy",
+        "@pip//pillow",
+        "@pip//pydot",
         "@pip//tensorflow",
     ],
 )

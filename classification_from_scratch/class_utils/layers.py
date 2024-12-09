@@ -1,4 +1,4 @@
-from typing import Callable, Generator, Tuple, BinaryIO, Optional
+from typing import Callable, Generator, Tuple, BinaryIO, Optional, Union
 from absl import logging
 import traceback
 import keras
@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.axis import Axis
 from matplotlib.figure import Figure
+import pydot
 import os
 from importlib import reload
 from pathlib import Path
@@ -102,7 +103,7 @@ def jfif_filter_2(
         logging.debug(f"Invalid JPEG data:\n\t{traceback.print_exc()}")
         return False, None
 
-        
+
 def image_validity_filter(file_path: Path) -> None:
     with Image.open(file_path) as img:
         img.verify()
@@ -144,14 +145,19 @@ def custom_image_dataset_from_directory(
         buffer_size=batch_size, seed=42 if use_seed else None
     ), dataset_length
 
-    
-def select_valid_images(input_path: Path, output_path: Path, return_if_exists: bool) -> None:
+
+def select_valid_images(
+    input_path: Path, output_path: Path, *, return_if_exists: bool, max_images: int
+) -> None:
     if not output_path.exists():
         output_path.mkdir()
     elif return_if_exists:
         return
 
+    # i primi 3 bytes di un file jpeg
+    jpeg_magic_bytes = b"\xff\xd8\xff" 
     for subdir in input_path.iterdir():
+        counter = 0
         if subdir.is_dir():
             path = output_path / subdir.name
             path.mkdir()
@@ -160,29 +166,188 @@ def select_valid_images(input_path: Path, output_path: Path, return_if_exists: b
                     try:
                         fobj = open(file_path, "rb")
                         is_jfif = b"JFIF" in fobj.peek(10)
+                        is_jpg = fobj.peek(10).startswith(jpeg_magic_bytes)
                     finally:
                         fobj.close()
 
-                    if is_jfif:
+                    if is_jfif and is_jpg and counter < max_images:
                         shutil.copy(file_path, path / file_path.name)
+                        counter += 1
 
 
-def visualize_first_9_images(dataset: tf.data.Dataset, *, transpose) -> Figure:
+def visualize_first_9_images(dataset: tf.data.Dataset, *, transpose, batch_size: int) -> Figure:
     fig = plt.figure(figsize=(10, 10))
     for images, labels in dataset.take(1):  # il dataset e' batched
-        for i in range(9):
+        for i in range(min(9, batch_size)):
             ax = plt.subplot(3, 3, i + 1)
             if transpose:
                 plt.imshow(
                     np.array(tf.transpose(images[i], perm=[2, 1, 0])).astype("uint8")
                 )
             else:
-                plt.imshow(
-                    np.array(images[i]).astype("uint8")
-                )
+                plt.imshow(np.array(images[i]).astype("uint8"))
 
             plt.title(int(labels[i]))
             plt.axis("off")
 
     return fig
 
+
+def visualize_images(images: tf.Tensor, labels: tf.Tensor, *, transpose: bool, batch_size: int) -> None:
+    for i in range(min(9, batch_size)):
+        ax = plt.subplot(3, 3, i + 1)
+        if transpose:
+            plt.imshow(
+                np.array(tf.transpose(images[i], perm=[2, 1, 0])).astype("uint8")
+            )
+        else:
+            plt.imshow(np.array(images[i]).astype("uint8"))
+
+        plt.title(int(labels[i]))
+        plt.axis("off")
+
+
+# la data augmentation e' la modifica con un fattore di randomicita del dataset di training
+# essa puo essere introdotta nel dataset, oppure integrata all'interno del modello
+# la seguente funzione prende un batch di immagini del tipo (num_batches, width, height, num_channels)
+# e applica alle sue prime num_images la data augmentation e ritorna le immagini trasformate
+# (l'input viene da un take da un batched dataset)
+# tutti i layers "Random" sono inattivi a test time, quindi quando chiami evaluate()
+def augment_images_from_batch(images: tf.Tensor, num_images: int = 9) -> tf.Tensor:
+    data_augmentation_layers = [
+        keras.layers.RandomFlip(mode="horizontal"),
+        keras.layers.RandomRotation(factor=0.1),  # radianti, antiorario
+    ]
+    for layer in data_augmentation_layers:
+        images = layer(images)
+
+    return images
+
+
+# keras ha diverse api per costruire un modello. il target //app:keras_test usa l'api
+# con le sottoclassi. Qui invece creiamo un modello con una funzione che accorpa
+# piu layers
+# @tf.function -> serve a poco perche la costruzione del modello va 1 sola volta
+def make_model(
+    input_shape: Union[Tuple[int, int, int, int], list[int]], num_classes: int
+) -> keras.Model:
+    # tutti i calcoli fatti qui usano computazione simbolica, senza actual numbers
+    # quindi usando la tensorflow "graph mode", al fine di costruire il grafo di
+    # computazione
+    the_inputs = keras.Input(shape=input_shape)  # un batch
+
+    # entry block (normalizzazione dei dati)
+    # dopo ogni convoluzione e' norma mettere un blocco di batch normalization e activation
+    # padding same aggiunge la quantita di padding necessaria a preservare la size
+    # assumendo stride a 1. Dato che gli ho passato stride a 2, sto dimezzando
+    x = keras.layers.Rescaling(1.0 / 255)(the_inputs)
+    x = keras.layers.Conv2D(filters=128, kernel_size=3, strides=2, padding="same")(x)
+    x = keras.layers.BatchNormalization()(x)
+    x = keras.layers.Activation("relu")(x)
+
+    # salva il residuo
+    previous_block_activation = x
+
+    for size in [256, 512, 728]:
+        # depthwise separable convolutions o grouped convolutions affinche ciascun kernel
+        # del layer convolutivo veda soltanto una parte delle features, al fine di diminuire
+        # il numero di parametri, che esplode al crescere della depth (numero features)
+        # https://towardsdatascience.com/a-basic-introduction-to-separable-convolutions-b99ec3102728
+        x = keras.layers.Activation("relu")(x)
+        x = keras.layers.SeparableConv2D(filters=size, kernel_size=3, padding="same")(x)
+        x = keras.layers.BatchNormalization()(x)
+
+        x = keras.layers.Activation("relu")(x)
+        x = keras.layers.SeparableConv2D(filters=size, kernel_size=3, padding="same")(x)
+        x = keras.layers.BatchNormalization()(x)
+
+        # downsampling, o strided convolutions o max pooling
+        #* finestra a 3, stride 2, padding same -> Dimezza
+        x = keras.layers.MaxPooling2D(pool_size=3, strides=2, padding="same")(x)
+
+        # convoluzione 1x1 per cambiare il numero di canali del blocco residuale
+        residual = keras.layers.Conv2D(
+            filters=size, kernel_size=1, strides=2, padding="same"
+        )(previous_block_activation)
+
+        # aggiungi blocco residuale
+        # - keras.ops.add aggiunge due tensori numerici
+        # - keras.layers.add crea un nodo di somma nel grafo di computazione
+        x = keras.layers.add([x, residual])
+
+        # aggiorna blocco residuale corrente
+        previous_block_activation = x
+
+    x = keras.layers.SeparableConv2D(filters=1024, kernel_size=3, padding="same")(x)
+    x = keras.layers.BatchNormalization()(x)
+    x = keras.layers.Activation("relu")(x)
+
+    # mi serve un class label, quindi collasso tutte le posizioni spaziali per ottenere
+    # un vettore di dimansione 1024
+    x = keras.layers.GlobalAveragePooling2D()(x)
+
+    # dai 1024 numeri dobbiamo passare a `num_classes` scores. (caso particolare, se le
+    # classi sono 2, passa a un solo score, perche se (tradotto in probabilita) e'
+    # minore di 0.5, scegli la prima classe, la seconda altrimenti)
+    output_units = 1 if num_classes == 2 else num_classes
+
+    # layer attivo solo in `fit()` mode: Dropout, che mette a caso a 0 degli scores
+    # al fine di evitare overfitting
+    x = keras.layers.Dropout(0.25)(x)
+
+    # ultimo layer fully connected per ridurre da 1024 a `output_units`, senza attivazione
+    # per ritornare "logits" o "scores", piuttosto che probabilita, ottenibili con la softmax
+    outputs = keras.layers.Dense(units=output_units, activation=None)(x)
+    return keras.Model(inputs=the_inputs, outputs=outputs)
+
+
+def dataset_with_pillow(data_dir: Path, image_size: Tuple[int, int], batch_size: int, validation_split: float, seed: int) -> Tuple[tf.data.Dataset, tf.data.Dataset]:
+    # Create DirectoryIterators
+    train_iterator = train_datagen.flow_from_directory(
+        data_dir,
+        target_size=image_size,
+        batch_size=batch_size,
+        class_mode="categorical",
+        subset="training",
+        seed=seed,
+    )
+
+    val_iterator = val_datagen.flow_from_directory(
+        data_dir,
+        target_size=image_size,
+        batch_size=batch_size,
+        class_mode="categorical",
+        subset="validation",
+        seed=seed,
+    )
+
+    # Obtain the class names from the train_iterator (they are sorted lexicographically)
+    class_names = sorted(train_iterator.class_indices.keys())  # Sorted class names
+
+    # Create a mapping of class names to integer labels (index)
+    class_to_index = {class_name: idx for idx, class_name in enumerate(class_names)}
+
+    # Convert one-hot labels to class indices
+    def convert_to_index(image, label):
+        # Convert one-hot encoded label to index
+        label_index = tf.argmax(label, axis=-1, output_type=tf.int32)  # Get index of the 1 in the one-hot vector
+        return image, label_index
+
+    # Convert DirectoryIterator to tf.data.Dataset
+    def iterator_to_dataset(iterator):
+        # Convert each batch of data
+        dataset = tf.data.Dataset.from_generator(
+            lambda: (next(iterator) for _ in iter(int, 1)),  # Infinite generator from iterator
+            output_signature=(
+                tf.TensorSpec(shape=(None, *image_size, 3), dtype=tf.float32),  # Batch of images
+                tf.TensorSpec(shape=(None,), dtype=tf.int32),  # Batch of class indices
+            )
+        )
+
+        # Apply conversion function to each batch to convert one-hot labels to indices
+        return dataset.map(convert_to_index)
+
+    # Convert train and validation iterators to tf.data.Dataset with class indices
+    dataset_train = iterator_to_dataset(train_iterator)
+    dataset_val = iterator_to_dataset(val_iterator)
+    return dataset_train, dataset_val

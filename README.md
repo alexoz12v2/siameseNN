@@ -101,3 +101,6 @@ Caveats:
 ### Note personali
 
 - Comando `kill -KILL %1` per terminare il processo sospeso con CTRL+z
+
+- vedere meglio la libreria `pillow`, che fa un lavoro migliore nel filtrare le immagini corrotte
+  (non funziona sempre comunque)

@@ -956,6 +956,10 @@ protobuf==5.29.1 \
     # via
     #   tensorboard
     #   tensorflow
+pydot==3.0.3 \
+    --hash=sha256:5e009d97b2fff92b7a88f09ec1fd5b163f07f3b10469c927d362471d6faa0d50 \
+    --hash=sha256:9b0b3081e0bd362d0c61148da10eb1281ec80089b02a28cf06f9093843986f3d
+    # via -r requirements.in
 pygments==2.18.0 \
     --hash=sha256:786ff802f32e91311bff3889f6e9a86e81505fe99f2735bb6d60ae0c5004f199 \
     --hash=sha256:b8e6aca0523f3ab76fee51799c488e38782ac06eafcf95e7ba832985c8e7b13a
@@ -963,7 +967,9 @@ pygments==2.18.0 \
 pyparsing==3.2.0 \
     --hash=sha256:93d9577b88da0bbea8cc8334ee8b918ed014968fd2ec383e868fb8afb1ccef84 \
     --hash=sha256:cbf74e27246d595d9a74b186b810f6fbb86726dbf3b9532efb343f6d7294fe9c
-    # via matplotlib
+    # via
+    #   matplotlib
+    #   pydot
 pyqt6==6.7.1 \
     --hash=sha256:0adb7914c732ad1dee46d9cec838a98cb2b11bc38cc3b7b36fbd8701ae64bf47 \
     --hash=sha256:2d771fa0981514cb1ee937633dfa64f14caa902707d9afffab66677f3a73e3da \

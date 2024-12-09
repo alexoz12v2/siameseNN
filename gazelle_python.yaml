@@ -185,6 +185,7 @@ manifest:
     pasta: google_pasta
     pillow.libs.libopenjp2-05423b53: pillow
     pkg_resources: setuptools
+    pydot: pydot
     pygments: pygments
     pylab: matplotlib
     pyparsing: pyparsing
@@ -205,4 +206,4 @@ manifest:
     zipp: zipp
   pip_repository:
     name: pip
-integrity: 3b2c06a14ff3eb5dc8c939e7b6861b79547ac4bcdb090dacc5e09d8e5bd4809f
+integrity: 17e3dd65242792c690c8adf50e347f6f3bb6c2291c4e05c18975c4d3b067d134

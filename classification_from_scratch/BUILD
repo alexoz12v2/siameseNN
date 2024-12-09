@@ -17,13 +17,15 @@ py_binary(
     srcs = ["__main__.py"],
     data = [":cats_and_dogs"],  # assicurati che nella cartella runfiles ci sono
     main = "__main__.py",
-    visibility = ["//:__subpackages__"],
     package_collisions = "warning",
+    visibility = ["//:__subpackages__"],
     deps = [
         "//classification_from_scratch/class_utils:layers",
         "@pip//absl_py",
         "@pip//keras",
         "@pip//matplotlib",
+        "@pip//numpy",
+        "@pip//pydot",
         "@pip//pyqt6",
         "@pip//tensorflow",
     ],
