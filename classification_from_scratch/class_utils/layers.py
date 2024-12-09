@@ -5,13 +5,15 @@ import keras
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
-from matplotlib.axis import Axis 
+from matplotlib.axis import Axis
 from matplotlib.figure import Figure
 import os
 from importlib import reload
 from pathlib import Path
 import re
 import numpy as np
+from PIL import Image
+import shutil
 
 
 def set_keras_backend(backend):
@@ -67,7 +69,9 @@ def filter_images(
 
 
 # allora provo a fare una decodifica due volte, al fine di poter filtrare le immagini meglio
-def jfif_filter_2(file_path: Path, file_content: BinaryIO) -> Tuple[bool, Optional[tf.Tensor]]:
+def jfif_filter_2(
+    file_path: Path, file_content: BinaryIO
+) -> Tuple[bool, Optional[tf.Tensor]]:
     """Predicate function that checks if the file is a valid JFIF image."""
     try:
         logging.debug(f"-- Checking Image {file_path.name} ...")
@@ -81,7 +85,9 @@ def jfif_filter_2(file_path: Path, file_content: BinaryIO) -> Tuple[bool, Option
             if not is_jpg:
                 return False, None
 
-            img = tf.io.decode_image(img) # Decode the image (tensore dtype uint8)
+            image_validity_filter(file_path)
+
+            img = tf.io.decode_image(img)  # Decode the image (tensore dtype uint8)
             logging.debug(f"\t image has is jpg? {is_jpg}")
             logging.debug(f"\t image has {img.ndim} dimensions and {img.shape} shape")
             logging.debug(f"-------------------------------------------")
@@ -96,10 +102,15 @@ def jfif_filter_2(file_path: Path, file_content: BinaryIO) -> Tuple[bool, Option
         logging.debug(f"Invalid JPEG data:\n\t{traceback.print_exc()}")
         return False, None
 
+        
+def image_validity_filter(file_path: Path) -> None:
+    with Image.open(file_path) as img:
+        img.verify()
+
 
 # keras fornisce la `keras.utils.image_dataset_from_directory`, pero non permette di filtrare i
 # files in base a un predicato arbitrario
-# @tf.function
+@tf.function
 def custom_image_dataset_from_directory(
     directory_path: Path,
     *,
@@ -122,7 +133,7 @@ def custom_image_dataset_from_directory(
     logging.info(f"dataset before batch+prefetch = {dataset}")
     # se non va, usa dataset.reduce(0, lambda x,_: x+1).numpy()
     # dataset_length = tf.data.experimental.cardinality(dataset).numpy()
-    dataset_length = dataset.reduce(0, lambda x, _: x + 1).numpy()
+    dataset_length = dataset.reduce(0, lambda x, _: x + 1)
 
     # piuttosto che dare un generatore di 1 immagine alla volta, fai lo stack di `batch_size``
     # tensori la botta. Inoltre, fai si che tensorflow prepari piu di un batch in anticipo
@@ -130,17 +141,48 @@ def custom_image_dataset_from_directory(
     dataset = dataset.batch(batch_size).prefetch(tf.data.AUTOTUNE)
     # seed fisso per mischiare le immagini con i due labels, in modo uniforme tra esecuzioni diverse
     return dataset.shuffle(
-        buffer_size=dataset.cardinality(), seed=42 if use_seed else None
+        buffer_size=batch_size, seed=42 if use_seed else None
     ), dataset_length
 
+    
+def select_valid_images(input_path: Path, output_path: Path, return_if_exists: bool) -> None:
+    if not output_path.exists():
+        output_path.mkdir()
+    elif return_if_exists:
+        return
 
-def visualize_first_9_images(dataset: tf.data.Dataset) -> Figure:
-    fig = plt.figure(figsize=(10,10))
-    for images, labels in dataset.take(1): # il dataset e' batched
+    for subdir in input_path.iterdir():
+        if subdir.is_dir():
+            path = output_path / subdir.name
+            path.mkdir()
+            for file_path in subdir.iterdir():
+                if file_path.is_file():
+                    try:
+                        fobj = open(file_path, "rb")
+                        is_jfif = b"JFIF" in fobj.peek(10)
+                    finally:
+                        fobj.close()
+
+                    if is_jfif:
+                        shutil.copy(file_path, path / file_path.name)
+
+
+def visualize_first_9_images(dataset: tf.data.Dataset, *, transpose) -> Figure:
+    fig = plt.figure(figsize=(10, 10))
+    for images, labels in dataset.take(1):  # il dataset e' batched
         for i in range(9):
             ax = plt.subplot(3, 3, i + 1)
-            plt.imshow(np.array(tf.transpose(images[i], perm=[2, 1, 0])).astype("uint8"))
+            if transpose:
+                plt.imshow(
+                    np.array(tf.transpose(images[i], perm=[2, 1, 0])).astype("uint8")
+                )
+            else:
+                plt.imshow(
+                    np.array(images[i]).astype("uint8")
+                )
+
             plt.title(int(labels[i]))
             plt.axis("off")
 
     return fig
+

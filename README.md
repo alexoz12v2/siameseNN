@@ -97,3 +97,7 @@ Caveats:
 
   Nota che ogni qual volta fai debugging, il cambio di working directory rimane nel terminale con il 
   virtual environment
+
+### Note personali
+
+- Comando `kill -KILL %1` per terminare il processo sospeso con CTRL+z

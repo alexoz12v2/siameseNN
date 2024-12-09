@@ -1,4 +1,5 @@
 absl-py
 tensorflow[and-cuda]
 keras
+pyqt6
 matplotlib

@@ -8,8 +8,10 @@ py_library(
     ],
     visibility = ["//:__subpackages__"],
     deps = [
+        "@pip//absl_py",
         "@pip//keras",
         "@pip//matplotlib",
+        "@pip//numpy",
         "@pip//tensorflow",
     ],
 )

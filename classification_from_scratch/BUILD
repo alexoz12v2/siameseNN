@@ -15,14 +15,16 @@ zip_extract(
 py_binary(
     name = "classification_from_scratch",
     srcs = ["__main__.py"],
-    data = [":cats_and_dogs"], # assicurati che nella cartella runfiles ci sono
+    data = [":cats_and_dogs"],  # assicurati che nella cartella runfiles ci sono
     main = "__main__.py",
     visibility = ["//:__subpackages__"],
+    package_collisions = "warning",
     deps = [
         "//classification_from_scratch/class_utils:layers",
         "@pip//absl_py",
         "@pip//keras",
+        "@pip//matplotlib",
+        "@pip//pyqt6",
         "@pip//tensorflow",
-        "@rules_python//python/runfiles",
     ],
 )
