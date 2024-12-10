@@ -30,10 +30,10 @@ usa la seguente funzione di distanza tra le immagini come loss
 \mathcal{L}=\left(1-Y\right) \frac{1}{2}\left(D_W\right)^2 + (Y)\frac{1}{2}\left\{\mathrm{max}\left(0,m-D_W\right)\right\}^2
 ```
 Dove 
-- $D_W$ \`e la *Distanza Euclidea* tra i due vettori
+- $D_W$ \`e la *Distanza Euclidea* tra i due vettori $Y$ e $\hat{Y}$
 - $m$ \`e un *margine* positivo, iperparametro che detta la distanza minima che i due vettori devono 
   possedere per essere contati come diversi
-- $Y$ peso settato a priori
+- $Y$ valore vero del label
 
 ### Triplet Loss
 Piuttosto che usare due immagini nel training, ne usiamo tre

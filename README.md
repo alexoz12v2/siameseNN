@@ -22,11 +22,15 @@ specificata in input alla rule.
 
 Il codice in se invece, segue la spiegazione fornita dalla [documentazione keras](https://keras.io/examples/vision/image_classification_from_scratch/)
 
+### `siamese_first` package
+Implementazione di una rudimentale rete siamese seguendo gli appunti nel file `SiameseNotes.md` e le 
+guide esempio keras su [Triplet Loss](https://keras.io/examples/vision/siamese_network/) e [Contrastive Loss](https://keras.io/examples/vision/siamese_contrastive/)
+
 ## Strumenti Utilizzati
 - `python` e librerie specificate `requirements.in`
 - `bazel`+`bazelisk` per il processo di building e deployment
 - Vs Code come IDE
-- `ruff` come strumento di linting e formatting
+- `ruff` come strumento di linting e formatting (sia programme che estensione VSCode)
 
 Tutti i dataset utilizzati possono essere scaricati in due modi
 - Tramite bazel, repository rule `http_file` -> Integrate nello zip deployato (e sono directories 
@@ -145,3 +149,23 @@ Caveats:
   (non funziona sempre comunque)
   
 - Quando editi i files python, attenzione a editare le sorgenti e non quelli nella bazel sandbox
+
+- esempio passare argomenti ad un `py_binary` fatto andare tramite bazel
+```sh
+bazel run //siamese_first:siamese_first -- --contrastive-loss --fast-train 
+```
+
+- VSCode ruff comandi: `Format Document`, `Organize Imports`, (non usare) `Fix All`
+
+## Deployment Applicativo
+Eseguire il comando
+```sh
+bazel build //:app_zip
+```
+nella convenience symlink `bazel-bin` viene creato un archivio `app_zip.zip` contenente tutto 
+il necessario per eseguire l'applicazione con script nativi al sistema operativo che ha generato
+lo zip.
+
+Nota come, dato che alcuni dataset sono scaricati nel processo di building e quindi inclusi nel 
+applicazione impacchettata, lo zip viene di 8.9 GB
+(apparte MNIST, che invece \`e scaricato a runtime)

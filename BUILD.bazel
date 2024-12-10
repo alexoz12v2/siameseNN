@@ -10,6 +10,7 @@ load("@rules_python//python:py_library.bzl", "py_library")
 load("@rules_python//python:py_test.bzl", "py_test")
 load("@rules_python_gazelle_plugin//manifest:defs.bzl", "gazelle_python_manifest")
 load("@rules_python_gazelle_plugin//modules_mapping:def.bzl", "modules_mapping")
+load("@rules_pkg//pkg:zip.bzl", "pkg_zip")
 
 compile_pip_requirements(
     name = "requirements",
@@ -58,12 +59,15 @@ gazelle(
 # gazelle:exclude
 
 # filegroup target per fare il packaging delle applicazioni python
-filegroup(
+pkg_zip(
     name = "app_zip",
-    srcs = [
+    srcs = [ 
         "//app:keras_test", 
         "//classification_from_scratch:classification_from_scratch",
         "//siamese_first:siamese_first",
+        #"//app:keras_test.venv", 
+        #"//classification_from_scratch:classification_from_scratch.venv",
+        #"//siamese_first:siamese_first.venv",
     ],
-    output_group = "python_zip_file",
+    include_runfiles = True,
 )

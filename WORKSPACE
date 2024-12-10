@@ -151,6 +151,18 @@ load("@rules_python_gazelle_plugin//:deps.bzl", _py_gazelle_deps = "gazelle_deps
 # for python requirements.
 _py_gazelle_deps()
 
+# download e unzip di rules_pkg al fine di poter impacchettare i binary python in un archivio
+http_archive(
+    name = "rules_pkg",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/1.0.1/rules_pkg-1.0.1.tar.gz",
+        "https://github.com/bazelbuild/rules_pkg/releases/download/1.0.1/rules_pkg-1.0.1.tar.gz",
+    ],
+    sha256 = "d20c951960ed77cb7b341c2a59488534e494d5ad1d30c4818c736d57772a9fef",
+)
+load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
+rules_pkg_dependencies()
+
 # Download datasets cats and dogs
 # generera nella cartella ~/.cache/bazel/_bazel_{USER}/{WORKSPACE dir hash}/execroot/{workspace name}/external/cats_and_dogs (essenzialmente la cartella del bazel sandbox)
 # un WORKSPACE + una cartella "file" che contiene lo zip
