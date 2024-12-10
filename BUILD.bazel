@@ -10,15 +10,19 @@ load("@rules_python//python:py_library.bzl", "py_library")
 load("@rules_python//python:py_test.bzl", "py_test")
 load("@rules_python_gazelle_plugin//manifest:defs.bzl", "gazelle_python_manifest")
 load("@rules_python_gazelle_plugin//modules_mapping:def.bzl", "modules_mapping")
+load("@rules_python_gazelle_plugin//:def.bzl", "GAZELLE_PYTHON_RUNTIME_DEPS")
 load("@rules_pkg//pkg:zip.bzl", "pkg_zip")
 
 compile_pip_requirements(
     name = "requirements",
-    src = "requirements.in",
     requirements_txt = "requirements_lock.txt",
     requirements_windows = "requirements_windows.txt",
     visibility = ["//visibility:public"],
 )
+
+# gazelle:map_kind py_library py_library @aspect_rules_py//py:defs.bzl
+# gazelle:map_kind py_binary py_binary @aspect_rules_py//py:defs.bzl
+# gazelle:map_kind py_test py_test @aspect_rules_py//py:defs.bzl
 
 # This repository rule fetches the metadata for python packages we
 # depend on. That data is required for the gazelle_python_manifest
@@ -52,13 +56,16 @@ gazelle_python_manifest(
 # If you also had proto, go, or other gazelle-supported languages,
 # you would also need a gazelle_binary rule.
 # See https://github.com/bazelbuild/bazel-gazelle/blob/master/extend.rst#example
+# gazelle:prefix github.com/alexoz12v2/siameseNN
+# non va su windows, non mi interessa, quello che mi importa e' che i py_binary vadano
 gazelle(
     name = "gazelle",
+    data = GAZELLE_PYTHON_RUNTIME_DEPS,
     gazelle = "@rules_python_gazelle_plugin//python:gazelle_binary",
 )
-# gazelle:exclude
 
 # filegroup target per fare il packaging delle applicazioni python
+# no. usare py_pex_binary
 pkg_zip(
     name = "app_zip",
     srcs = [ 

@@ -1,0 +1,8 @@
+{
+    "terminal.integrated.profiles.windows": {
+        "TerminalNameExample": {
+            "path": ["${env:windir}\\Sysnative\\cmd.exe", "${env:windir}\\System32\\cmd.exe"],
+            "args": ["/k", "X:\\VisualStudio\\Common7\\Tools\\VsDevCmd.bat"],
+        }
+    }
+}

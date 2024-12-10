@@ -20,26 +20,25 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
     name = "io_bazel_rules_go",
-    sha256 = "278b7ff5a826f3dc10f04feaf0b70d48b68748ccd512d7f98bf442077f043fe3",
+    integrity = "sha256-M6zErg9wUC20uJPJ/B3Xqb+ZjCPn/yxFF3QdQEmpdvg=",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.41.0/rules_go-v0.41.0.zip",
-        "https://github.com/bazelbuild/rules_go/releases/download/v0.41.0/rules_go-v0.41.0.zip",
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.48.0/rules_go-v0.48.0.zip",
+        "https://github.com/bazelbuild/rules_go/releases/download/v0.48.0/rules_go-v0.48.0.zip",
     ],
 )
 
-# Download the bazel_gazelle ruleset.
 http_archive(
     name = "bazel_gazelle",
-    sha256 = "d3fa66a39028e97d76f9e2db8f1b0c11c099e8e01bf363a923074784e451f809",
+    integrity = "sha256-12v3pg/YsFBEQJDfooN6Tq+YKeEWVhjuNdzspcvfWNU=",
     urls = [
-        "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.33.0/bazel-gazelle-v0.33.0.tar.gz",
-        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.33.0/bazel-gazelle-v0.33.0.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.37.0/bazel-gazelle-v0.37.0.tar.gz",
+        "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.37.0/bazel-gazelle-v0.37.0.tar.gz",
     ],
 )
 
 # Load rules_go ruleset and expose the toolchain and dep rules.
-load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
 load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
+load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies", "go_repository")
 
 # go_rules_dependencies is a function that registers external dependencies
 # needed by the Go rules.
@@ -49,10 +48,17 @@ go_rules_dependencies()
 # go_rules_dependencies is a function that registers external dependencies
 # needed by the Go rules.
 # See: https://github.com/bazelbuild/rules_go/blob/master/go/dependencies.rst#go_rules_dependencies
-go_register_toolchains(version = "1.19.4")
+go_register_toolchains(version = "1.20.5")
 
 # The following call configured the gazelle dependencies, Go environment and Go SDK.
-gazelle_dependencies()
+# gazelle_dependencies supports optional argument go_env (dict-mapping) to set project specific go environment variables. 
+# If you are using a WORKSPACE.bazel file, you will need to specify that using:
+gazelle_dependencies(
+    go_repository_default_config = "//:WORKSPACE",
+    go_env = {
+        "CGO_ENABLED": "1",
+    },
+)
 
 # Remaining setup is for rules_python.
 http_archive(
@@ -162,6 +168,13 @@ http_archive(
 )
 load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
 rules_pkg_dependencies()
+
+http_archive(
+    name = "rules_pyvenv",
+    sha256 = "3a3cc6e211850178de02b618d301f3f39d1a9cddb54d499d816ff9ea835a2834",
+    strip_prefix = "rules_pyvenv-1.2",
+    url = "https://github.com/cedarai/rules_pyvenv/archive/refs/tags/v1.2.tar.gz",
+)
 
 # Download datasets cats and dogs
 # generera nella cartella ~/.cache/bazel/_bazel_{USER}/{WORKSPACE dir hash}/execroot/{workspace name}/external/cats_and_dogs (essenzialmente la cartella del bazel sandbox)

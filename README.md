@@ -169,3 +169,5 @@ lo zip.
 Nota come, dato che alcuni dataset sono scaricati nel processo di building e quindi inclusi nel 
 applicazione impacchettata, lo zip viene di 8.9 GB
 (apparte MNIST, che invece \`e scaricato a runtime)
+
+## Installazione in ambiente Windows

@@ -1,0 +1,14 @@
+# https://stackoverflow.com/questions/69890200/how-to-configure-os-specific-dependencies-in-a-pyproject-toml-file-maturin
+[project]
+name = "siameseNN"
+version = "1.0.0"
+dependencies = [
+    "absl-py",
+    "keras",
+    "pyqt6",
+    "pydot",
+    "matplotlib",
+    "tensorflow[and-cuda] ; platform_system == 'Linux'",
+    "tensorflow-cpu >2.12 ; platform_system == 'Windows'",
+    "tensorflow-directml-plugin ; platform_system == 'Windows'",
+]
