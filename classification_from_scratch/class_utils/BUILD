@@ -1,4 +1,5 @@
-load("@aspect_rules_py//py:defs.bzl", "py_library")
+load("@rules_python//python:python.bzl", "py_binary")
+load("@s_pip_deps//:requirements.bzl", "requirement", "data_requirement")
 
 py_library(
     name = "layers",
@@ -31,14 +32,12 @@ py_library(
             # requirement("nvidia-nvjitlink-cu12" )
         ],
         "@bazel_tools//src/conditions:windows": [
-            requirement("tensorflow-cpu"),
-            requirement("tensorflow-directml-plugin")
+            requirement("tensorflow"),
         ],
         "//conditions:default": []
     }),
     data = [] + select({
         "@bazel_tools//src/conditions:windows": [
-            data_requirement("tensorflow-directml-plugin")
         ],
         "//conditions:default": []
     })

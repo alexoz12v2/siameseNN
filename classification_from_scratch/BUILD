@@ -17,7 +17,6 @@ py_binary(
     name = "classification_from_scratch",
     srcs = ["__main__.py"],
     main = "__main__.py",
-    package_collisions = "warning",
     visibility = ["//:__subpackages__"],
     deps = [
         "//classification_from_scratch/class_utils:layers",
@@ -44,8 +43,7 @@ py_binary(
             # requirement("nvidia-nvjitlink-cu12" )
         ],
         "@bazel_tools//src/conditions:windows": [
-            requirement("tensorflow-cpu"),
-            requirement("tensorflow-directml-plugin")
+            requirement("tensorflow"),
         ],
         "//conditions:default": []
     }),
@@ -53,7 +51,6 @@ py_binary(
         ":cats_and_dogs"
     ] + select({
         "@bazel_tools//src/conditions:windows": [
-            data_requirement("tensorflow-directml-plugin")
         ],
         "//conditions:default": []
     })
