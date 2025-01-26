@@ -2,15 +2,26 @@ from absl import logging
 from absl import app
 from pathlib import Path
 from PyQt6.QtWidgets import QApplication, QWidget
-import keras
+import os
+
+g_paths = ["Y:\\siameseNN\\.venv\\Lib\\site-packages\\tensorflow-plugins", "Y:\\siameseNN\\.venv\\Lib\\site-packages\\tensorflow\\python"]
+def add_dll_path(path: str) -> None:
+    if not os.path.exists(path):
+        raise ValueError("What")
+    os.add_dll_directory(path)
+for p in g_paths:
+    add_dll_path(p)
+
+os.environ['Path'] = os.environ['Path'] + ";" + g_paths[0] + ";" + g_paths[1]
+
 import tensorflow as tf
+import keras
 import classification_from_scratch.class_utils as utils
 import matplotlib.pyplot as plt
 import matplotlib
 import pydot
 import numpy as np
 from matplotlib.axes import Axes
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 
 def compressed_tree(dir_path: Path, prefix: str = ""):

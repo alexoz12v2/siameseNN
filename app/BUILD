@@ -1,40 +1,40 @@
-load("@aspect_rules_py//py:defs.bzl", aspect_py_binary = "py_binary")
+load("@rules_python//python:python.bzl", "py_binary")
+load("@s_pip_deps//:requirements.bzl", "requirement", "data_requirement")
 
-# argomento che puoi passare resolutions, che e' un dict str -> label
-aspect_py_binary(
+py_binary(
     name = "keras_test",
     srcs = ["__main__.py"],
     main = "__main__.py",
-    visibility = ["//:__subpackages__"],
     deps = [
         "//app/utils:layers",
-        "@pip//absl_py",
-        "@pip//keras",
-        "@pip//tensorflow",
-    ],
-)
-
-# wiundows only (requirement lo prendi dal workspace creato da pip_parse)
-py_binary(
-    name = "keras_test_win",
-    srcs = ["__main__.py"],
-    main = "__main__.py",
-    visibility = ["//visibility:public"],
-    deps = [
-        "//app/utils:layers_win",
-    ],
-)
-
-load("@pip//:requirements.bzl", "requirement", "data_requirement")
-load("@rules_pyvenv//:venv.bzl", "py_venv")
-py_venv(
-    name = "win_venv",
-    deps = [
-        "//app/utils:layers_win",
-        requirement("absl-py"),
-        requirement("tensorflow_intel"),
+        requirement("absl_py"),
         requirement("keras"),
-        requirement("tensorflow_directml_plugin"),
-    ],
-    venv_location = ".app+keras_test.venv",
+    ] + select({
+        "@bazel_tools//src/conditions:linux": [
+            requirement("tensorflow[and-cuda]") # testare se funziona
+            # requirement("tensorflow"),
+            # requirement("nvidia-cublas-cu12")
+            # requirement("nvidia-cuda-cupti-cu12")
+            # requirement("nvidia-cuda-nvrtc-cu12")
+            # requirement("nvidia-cuda-runtime-cu12")
+            # requirement("nvidia-cudnn-cu12")
+            # requirement("nvidia-cufft-cu12")
+            # requirement("nvidia-curand-cu12" )
+            # requirement("nvidia-cusolver-cu12")
+            # requirement("nvidia-cusparse-cu12")
+            # requirement("nvidia-nccl-cu12")
+            # requirement("nvidia-nvjitlink-cu12" )
+        ],
+        "@bazel_tools//src/conditions:windows": [
+            requirement("tensorflow-cpu"),
+            requirement("tensorflow-directml-plugin")
+        ],
+        "//conditions:default": []
+    }),
+    data = [] + select({
+        "@bazel_tools//src/conditions:windows": [
+            data_requirement("tensorflow-directml-plugin")
+        ],
+        "//conditions:default": []
+    })
 )

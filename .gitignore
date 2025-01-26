@@ -491,3 +491,4 @@ TSWLatexianTemp*
 # Ignore jekyll build output.
 /production
 /.sass-cache
+MODULE.bazel.lock

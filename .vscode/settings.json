@@ -1,8 +1,27 @@
 {
+    // Change the path to your visual studio installation
     "terminal.integrated.profiles.windows": {
-        "TerminalNameExample": {
-            "path": ["${env:windir}\\Sysnative\\cmd.exe", "${env:windir}\\System32\\cmd.exe"],
-            "args": ["/k", "X:\\VisualStudio\\Common7\\Tools\\VsDevCmd.bat"],
+        "DevCmd64": {
+            "path": ["${env:windir}\\System32\\cmd.exe"],
+            "args": [
+                "/k", 
+                "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\Tools\\VsDevCmd.bat",
+                "-startdir=none", 
+                "-arch=x64", 
+                "-host_arch=x64"
+            ]
+        },
+        "DevPS164": {
+            "path": "powershell.exe",
+            "args": [
+              "-ExecutionPolicy",
+              "Bypass",
+              "-NoExit",
+              "-Command",
+              "&{Import-Module \"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\Tools\\Microsoft.VisualStudio.DevShell.dll\"; Enter-VsDevShell 3d82239f -SkipAutomaticLocation -DevCmdArguments \"-arch=x64 -host_arch=x64\"}"
+            ]
         }
-    }
+    },
+    "terminal.integrated.defaultProfile.windows": "DevPS164",
+    "python.analysis.languageServerMode": "light"
 }

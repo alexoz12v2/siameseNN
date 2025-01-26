@@ -1,3 +1,4 @@
+.venv
 .app+keras_test.venv
 .classification_from_scratch+classification_from_scratch.venv
 .siamese_first+siamese_first.venv

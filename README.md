@@ -171,3 +171,87 @@ applicazione impacchettata, lo zip viene di 8.9 GB
 (apparte MNIST, che invece \`e scaricato a runtime)
 
 ## Installazione in ambiente Windows
+### Installazione software
+#### Abilitare `Long Paths`
+- `Win+R` ed eseguire `regedit`
+- controllare nel registro `HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem` e assicurarsi
+  che la chiave `DWORD` chiamata `LongPathsEnabled` sia settata a `1`. Questo abilita la possibilita di abilitare
+  Le long paths. Chiudere il registro
+- `Win+R` ed eseguire `gpedit.msc` (se non e' disponibile, seguire [Questa Guida](https://www.majorgeeks.com/content/page/enable_group_policy_editor_in_windows_10_home_edition.html))
+- Navigare in `Computer Configuration\Administrative Templates\System\Filesystem\` e assicurarsi che
+  `Enable Win32 long paths` sia `Enabled`
+- Sempre in `gpedit.msc`, navigare su `Computer Configuration\Windows Settings\Security Settings\Local Policies\User Right Assignment` 
+  e assicurarsi che `Create symbolic links` contenga l'utente che esegue `bazel`
+
+#### Installazione bazel
+- Scaricare `chocolatey` eseguendo, da powershell come amministratore
+  ```powershell
+  Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+  ```
+- Eseguire, da powershell come amministratore, `choco install bazelisk`
+- Scaricare MSYS2 da [Questo Link](https://www.msys2.org/)
+- Aggiungere nella variabile d'ambiente `BAZEL_SH` la path alla `usr\bin` directory di MSYS
+- Aggiungere MSYS e bazel alla variabile d'ambiente `Path`
+- avviare la console di msys e lanciare
+  ```sh
+  pacman -S zip unzip patch diffutils git
+  ```
+- Scaricare Visual Studio. Se e' scaricato in una directory diversa da quella default, ci sono variabili d'ambiente
+  da settare come indicato nella [Guida d'installazione di Bazel](https://bazel.build/install/windows)
+- Scaricare Java. [Link](https://www.oracle.com/java/technologies/downloads/#java11?er=221886)
+
+#### Python e software opzionale
+- Scaricare Python 3.10,
+  ```powershell
+  winget install Python.Python.3.10
+  ```
+  se installata con successo, questa versione dovrebbe essere visibile dal windows python launcher `py --list`
+
+#### Software opzionale
+- formatter: installazione `winget install astral-sh.ruff`, ed esecuzione `ruff format`
+
+#### Testare se tutto funziona
+```sh
+bazel query @bazel_tools//src/conditions:all
+```
+
+### Costruzione Python Virtual Environment (per debugging)
+```powershell
+py -3.10 -m venv .venv
+```
+Questo comando crea un python virtual environment nella cartella `.venv`, al quale si puo "entrare" (cioe' settare
+`Path` e `PYTHONPATH` environemnt variables in maniera appropriata) con il seguente comando (powershell)
+```
+.\.venv\Scripts\Activate.ps1
+```
+Per controllare la differenza delle variabili di ambiente eseguire
+```powershell
+Get-ChildItem Env:* | Sort-Object Name
+```
+In particolare, devono apparire le variabili di ambiente `VIRTUAL_ENV` e `VIRTUAL_ENV_PROMPT`
+
+Possiamo dunque installare le dipendenze nel virtual environment con il comando
+```
+pip install -r requirements_windows.txt
+```
+La cartella `.venv\Lib\site-packages` dovrebbe contenere tutte le librerie installate
+
+#### Integrazione Visual Studio Code
+- Scaricare le estensioni `Python Extension Pack`, `Bazel`
+- Assicurarsi che nel `settings.json`, dove sono definiti i terminali, sia inserita la path alla propria 
+  installazione di Visual Studio.
+- Definizione nel `launch.json` delle configurazioni di debugging utilizzanti il virtual environment
+- Assicurarsi, con un file python `__main__.py` qualsiasi, che l'interprete Python usato per il debugging sia
+  quello del virtual environment, dunque `Shift+Ctrl+P` e digitare `Python: Select Interpreter`, dunque
+  selezionare il virtual environment
+Nota che ogni volta che il virtual environment viene cambiato da VSCode, i terminali vanno riaperti, perche 
+visual studio code inserisce i terminali nel venv in automatico. Verificare con
+```powershell
+Get-ChildItem Env:* | Sort-Object Name | findstr VIRTUAL_ENV
+```
+
+#### Testare che tensorflow sta usando la GPU
+Nel Virtual Environment o da codice
+```sh
+python -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))"
+```

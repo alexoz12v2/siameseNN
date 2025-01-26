@@ -8,7 +8,13 @@ dependencies = [
     "pyqt6",
     "pydot",
     "matplotlib",
-    "tensorflow[and-cuda] ; platform_system == 'Linux'",
-    "tensorflow-cpu >2.12 ; platform_system == 'Windows'",
-    "tensorflow-directml-plugin ; platform_system == 'Windows'",
+    "tensorflow[and-cuda] ; platform_system == 'Linux'", # On windows doesn't work unless you use WSL2. No.
+    "tensorflow<2.11 ; platform_system == 'Windows'",
+    "nvidia-cuda-runtime-cu12 ; platform_system == 'Windows'",
+    "nvidia-cuda-cupti-cu12 ; platform_system == 'Windows'",
+    "nvidia-cuda-nvrtc-cu12 ; platform_system == 'Windows'",
+    "nvidia-cudnn-cu12==8.9.4.25 ; platform_system == 'Windows'",
+    # This should work on windows without WSL2.Tried, gives DLL error.
+    # "tensorflow-cpu >2.12 ; platform_system == 'Windows'",
+    # "tensorflow-directml-plugin ; platform_system == 'Windows'",
 ]
