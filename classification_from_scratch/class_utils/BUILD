@@ -32,12 +32,13 @@ py_library(
             # requirement("nvidia-nvjitlink-cu12" )
         ],
         "@bazel_tools//src/conditions:windows": [
-            requirement("tensorflow"),
+            requirement("tensorflow-intel"),
         ],
         "//conditions:default": []
     }),
     data = [] + select({
         "@bazel_tools//src/conditions:windows": [
+            data_requirement("tensorflow-intel"),
         ],
         "//conditions:default": []
     })

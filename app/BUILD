@@ -26,14 +26,13 @@ py_binary(
             # requirement("nvidia-nvjitlink-cu12" )
         ],
         "@bazel_tools//src/conditions:windows": [
-            requirement("tensorflow-cpu"),
-            requirement("tensorflow-directml-plugin")
+            requirement("tensorflow-intel"),
         ],
         "//conditions:default": []
     }),
     data = [] + select({
         "@bazel_tools//src/conditions:windows": [
-            data_requirement("tensorflow-directml-plugin")
+            data_requirement("tensorflow-intel"),
         ],
         "//conditions:default": []
     })

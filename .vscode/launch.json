@@ -10,9 +10,10 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            //"cwd": "${workspaceFolder}/bazel-bin/${relativeFileDirname}/${fileDirnameBasename}.runfiles/build_file_generation_example",
+            "cwd": "${workspaceFolder}/bazel-bin/${relativeFileDirname}/${fileDirnameBasename}.exe.runfiles/_main", // windows
             "env": {
-                "PYTHONPATH": "${env:PYTHONPATH}:${workspaceFolder}"
+                // "PYTHONPATH": "${env:PYTHONPATH}:${workspaceFolder}" // linux
+                "PYTHONPATH": "${env:PYTHONPATH};${workspaceFolder}" // windows
             }
         },
         {

@@ -8,11 +8,18 @@ def _zip_extract_impl(ctx):
 
     # Determine the command based on the operating system
     if ctx.attr.platform_flag == "windows":
+        new_name = ctx.file.zip_file.path[ctx.file.zip_file.path.rfind("/")+1:] + ".zip"
+        old_name = new_name.rstrip(".zip")
+        print("{new_name}".format(new_name=new_name))
         # For Windows, use the cmd command to unzip
         unzip_command = """
-        mkdir "{output_dir}" && 
-        powershell -Command "Expand-Archive -Path '{zip_file}' -DestinationPath '{output_dir}'"
+        /c/Windows/System32/WindowsPowerShell/v1.0/powershell -Command "
+Rename-Item -Path \\"{zip_file}\\" -NewName \\"{new_name}\\";\\
+Expand-Archive -Path '{zip_file}.zip' -DestinationPath '{output_dir}';\\
+Rename-Item -Path \\"{zip_file}.zip\\" -NewName \\"{old_name}\\""
         """.format(
+            old_name=old_name,
+            new_name=new_name,
             output_dir=output_dir.path,
             zip_file=ctx.file.zip_file.path,
         )

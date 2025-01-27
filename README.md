@@ -190,8 +190,8 @@ applicazione impacchettata, lo zip viene di 8.9 GB
   ```
 - Eseguire, da powershell come amministratore, `choco install bazelisk`
 - Scaricare MSYS2 da [Questo Link](https://www.msys2.org/)
-- Aggiungere nella variabile d'ambiente `BAZEL_SH` la path alla `usr\bin` directory di MSYS
-- Aggiungere MSYS e bazel alla variabile d'ambiente `Path`
+- Aggiungere nella variabile d'ambiente `BAZEL_SH` la path alla `usr\bin\bash.exe` di MSYS
+- Aggiungere MSYS `bin` directory e bazel alla variabile d'ambiente `Path`
 - avviare la console di msys e lanciare
   ```sh
   pacman -S zip unzip patch diffutils git

@@ -26,6 +26,8 @@ py_binary(
         requirement("numpy"),
         requirement("pydot"),
         requirement("pyqt6"),
+        requirement("pyqt6-qt6"),
+        requirement("pyqt6-sip"),
     ] + select({
         "@bazel_tools//src/conditions:linux": [
             requirement("tensorflow[and-cuda]") # testare se funziona
@@ -43,7 +45,7 @@ py_binary(
             # requirement("nvidia-nvjitlink-cu12" )
         ],
         "@bazel_tools//src/conditions:windows": [
-            requirement("tensorflow"),
+            requirement("tensorflow-intel"),
         ],
         "//conditions:default": []
     }),
@@ -51,6 +53,10 @@ py_binary(
         ":cats_and_dogs"
     ] + select({
         "@bazel_tools//src/conditions:windows": [
+            data_requirement("tensorflow-intel"),
+            data_requirement("pyqt6"),
+            data_requirement("pyqt6-qt6"),
+            data_requirement("pyqt6-sip"),
         ],
         "//conditions:default": []
     })
