@@ -1,10 +1,12 @@
 test --test_output=errors --enable_runfiles
-common --enable_bzlmod --nolegacy_external_runfiles
+common --enable_bzlmod --nolegacy_external_runfiles --enable_platform_specific_config
 
 # Windows requires these for multi-python support:
-build --build_python_zip=false --enable_runfiles
+build:windows --build_python_zip=false --enable_runfiles
 
 # https://bazel.build/configure/windows
-# decommentare se si presenta il problema della "Maximum Path Length Limitation"
-# startup --output_user_root=X:/tmp
-startup --windows_enable_symlinks
+# DLL directories sono gestite da python senza "Long Paths", quindi siamo bloccato con directories non oltre 260 caratteri
+# al fine di scongiurare tale problema, inseriamo gli artefatti di bazel in una directory molto corta, la quale punta ad una
+# partizione *NTFS* con *8dot3 names abilitati* (controllare da powershell/cmd admin con `fsutil 8dot3name query Y:`)
+# *Commentare se su linux*
+startup --windows_enable_symlinks --output_user_root="Y:\\_bzl"

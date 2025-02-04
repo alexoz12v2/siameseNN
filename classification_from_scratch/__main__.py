@@ -2,23 +2,8 @@ from absl import logging
 from absl import app
 from pathlib import Path
 import numpy as np
-
-import os
-import platform
-
-#if platform.system() == "Windows":
-#    # g_paths = ["Y:\\siameseNN\\.venv\\Lib\\site-packages\\tensorflow-plugins", "Y:\\siameseNN\\.venv\\Lib\\site-packages\\tensorflow\\python"]
-#    g_paths = [Path.cwd().parent.parent / "classification_from_scratch.exe.runfiles" / "rules_python~~pip~s_pip_deps_310_pyqt6_qt6" / "site-packages" / "PyQt6" / "Qt6" / "bin"]
-#    def add_dll_path(path: Path) -> None:
-#        if not path.is_dir():
-#            raise ValueError(f"{str(p)} doesn't exist")
-#        os.add_dll_directory(path)
-#        print(f"Added {p} to DLL path")
-#    for p in g_paths:
-#        add_dll_path(p)
-
+import utils.pyqt_import_hook
 from PyQt6.QtWidgets import QApplication, QWidget
-
 import tensorflow as tf
 import keras
 import classification_from_scratch.class_utils as utils

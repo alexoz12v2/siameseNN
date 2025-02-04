@@ -17,9 +17,16 @@ py_binary(
     name = "classification_from_scratch",
     srcs = ["__main__.py"],
     main = "__main__.py",
+    env = select({
+        "@bazel_tools//src/conditions:windows": {
+            "BAZEL_FIX_DLL": "Y"
+        },
+        "//conditions:default": {}
+    }),
     visibility = ["//:__subpackages__"],
     deps = [
         "//classification_from_scratch/class_utils:layers",
+        "//utils",
         requirement("absl_py"),
         requirement("keras"),
         requirement("matplotlib"),

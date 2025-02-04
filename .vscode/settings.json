@@ -23,5 +23,6 @@
         }
     },
     "terminal.integrated.defaultProfile.windows": "DevPS164",
-    "python.analysis.languageServerMode": "light"
+    "python.analysis.languageServerMode": "light",
+    "python.autoComplete.extraPaths": [${workspaceFolder}]
 }
