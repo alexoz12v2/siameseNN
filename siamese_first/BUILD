@@ -25,13 +25,14 @@ zip_extract(
 py_binary(
     name = "siamese_first",
     srcs = ["__main__.py"],
-    data = [
-        ":siamese_left",
-        ":siamese_right",
-    ],
     main = "__main__.py",
-    package_collisions = "warning",  # qt6 genera symlinks conflittuali, non mi interessa
     visibility = ["//:__subpackages__"],
+    env = select({
+        "@bazel_tools//src/conditions:windows": {
+            "BAZEL_FIX_DLL": "Y"
+        },
+        "//conditions:default": {}
+    }),
     deps = [
         "//siamese_first/siamese_lib",
         requirement("absl_py"),
@@ -57,14 +58,17 @@ py_binary(
             # requirement("nvidia-nvjitlink-cu12" )
         ],
         "@bazel_tools//src/conditions:windows": [
-            requirement("tensorflow-cpu"),
-            requirement("tensorflow-directml-plugin")
+            requirement("tensorflow-intel"),
+            #requirement("tensorflow-directml-plugin")
         ],
         "//conditions:default": []
     }),
-    data = [] + select({
+    data = [
+        ":siamese_left",
+        ":siamese_right",
+    ] + select({
         "@bazel_tools//src/conditions:windows": [
-            data_requirement("tensorflow-directml-plugin")
+            #data_requirement("tensorflow-directml-plugin")
         ],
         "//conditions:default": []
     })

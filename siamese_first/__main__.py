@@ -8,6 +8,7 @@ import pydot
 import tensorflow as tf
 from absl import app, flags, logging
 from matplotlib.axes import Axes
+import utils.pyqt_import_hook
 from PyQt6.QtWidgets import QApplication, QWidget
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 

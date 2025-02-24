@@ -8,5 +8,5 @@ build:windows --build_python_zip=false --enable_runfiles
 # DLL directories sono gestite da python senza "Long Paths", quindi siamo bloccato con directories non oltre 260 caratteri
 # al fine di scongiurare tale problema, inseriamo gli artefatti di bazel in una directory molto corta, la quale punta ad una
 # partizione *NTFS* con *8dot3 names abilitati* (controllare da powershell/cmd admin con `fsutil 8dot3name query Y:`)
-# *Commentare se su linux*
+# *Commentare se su linux*, modificare se tale path non esiste, ma non committare modifiche su questa riga
 startup --windows_enable_symlinks --output_user_root="Y:\\_bzl"
