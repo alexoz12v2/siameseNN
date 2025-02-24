@@ -1,8 +1,9 @@
 import absl
 from absl import logging
+import utils
 import tensorflow as tf
 import keras
-import app.utils as utils  # tutte le path sono relative a WORKSPACE
+import first_app.apputils as apputils  # tutte le path sono relative a WORKSPACE
 
 
 def synthetic_dataset() -> dict[str, tf.Tensor]:
@@ -10,7 +11,8 @@ def synthetic_dataset() -> dict[str, tf.Tensor]:
     keras.utils.set_random_seed(812)
 
     # riduci performance GPU per rendere i calcoli floating points piu precisi, quindi piu riproducibili
-    tf.config.experimental.enable_op_determinism()
+    # su Tensorflow 2.10 GPU crasha
+    # tf.config.experimental.enable_op_determinism()
 
     # Parameters
     num_samples_train: int = 5000
@@ -18,16 +20,16 @@ def synthetic_dataset() -> dict[str, tf.Tensor]:
     num_features: int = 32
     num_classes: int = 10
 
-    # random training data
-    x_train: tf.Tensor = keras.random.normal(shape=[num_samples_train, num_features])
-    y_train: tf.Tensor = keras.random.randint(
-        shape=[num_samples_train], minval=0, maxval=num_classes
+    # Random training data
+    x_train: tf.Tensor = tf.random.normal(shape=[num_samples_train, num_features])
+    y_train: tf.Tensor = tf.random.uniform(
+        shape=[num_samples_train], minval=0, maxval=num_classes, dtype=tf.int32
     )
 
-    # random validation data
-    x_val: tf.Tensor = keras.random.normal(shape=[num_samples_val, num_features])
-    y_val: tf.Tensor = keras.random.randint(
-        shape=[num_samples_val], minval=0, maxval=num_classes
+    # Random validation data
+    x_val: tf.Tensor = tf.random.normal(shape=[num_samples_val, num_features])
+    y_val: tf.Tensor = tf.random.uniform(
+        shape=[num_samples_val], minval=0, maxval=num_classes, dtype=tf.int32
     )
 
     # one-hot encoding -> NO. le loss functions di keras vogliono l'argmax
@@ -45,13 +47,13 @@ def synthetic_dataset() -> dict[str, tf.Tensor]:
 def main(argv: list[str]) -> None:
     del argv
     logging.info("Hello World!")
-    utils.set_keras_backend("tensorflow")
-    logging.info(f"Active Keras Backend: {keras.backend.backend()}")
+    apputils.keras_utils.set_keras_backend("tensorflow")
+    logging.info(f"Active Keras Backend: {tf.keras.backend.backend()}")
     logging.info(f"CUDA Devices: {tf.config.list_physical_devices('GPU')}")
 
-    my_linear = utils.MLPBlock()
+    my_linear = apputils.layers.MLPBlock()
     num_batches = 10
-    input = keras.random.normal(shape=(num_batches, 32))
+    input = tf.random.normal(shape=(num_batches, 32))
     out = my_linear(input)
     logging.info(f"output from MLP: {tf.squeeze(out)}")
     logging.info(
@@ -64,7 +66,7 @@ def main(argv: list[str]) -> None:
     logging.info(f"x_val:   {dataset['x_val'].shape}")
     logging.info(f"y_val:   {dataset['y_val'].shape}")
 
-    trainer = utils.MLPTrainer()
+    trainer = apputils.layers.MLPTrainer()
     trainer.epochs = 100
     trainer.batch_size = 50
     trainer.train(

@@ -203,8 +203,8 @@ class DistanceLayer(keras.layers.Layer):
     def call(
         self, anchor: tf.Tensor, positive: tf.Tensor, negative: tf.Tensor
     ) -> Tuple[tf.Tensor, tf.Tensor]:
-        ap_distance = keras.ops.sum(tf.square(anchor - positive), axis=None)
-        an_distance = keras.ops.sum(tf.square(anchor - negative), axis=None)
+        ap_distance = tf.math.reduce_sum(tf.square(anchor - positive), axis=None)
+        an_distance = tf.math.reduce_sum(tf.square(anchor - negative), axis=None)
         return (ap_distance, an_distance)
 
 
@@ -439,7 +439,7 @@ def mnist_visualize(
 
         # mostra iesima coppia, prima e seconda immagine
         ax.imshow(
-            keras.ops.concatenate(
+            tf.concat(
                 [dataset_pairs.pairs[i][0], dataset_pairs.pairs[i][1]], axis=1
             ),
             cmap="gray",
@@ -462,18 +462,18 @@ def mnist_visualize(
 
 def euclidean_distance(vects):
     x, y = vects
-    sum_square = keras.ops.sum(keras.ops.square(x - y), axis=1, keepdims=1)
-    return keras.ops.sqrt(keras.ops.maximum(sum_square, keras.backend.epsilon()))
+    sum_square = tf.math.reduce_sum(tf.math.square(x - y), axis=1, keepdims=1)
+    return tf.math.sqrt(tf.math.maximum(sum_square, keras.backend.epsilon()))
 
 
 def contrastive_loss(margin=1):
     def _contrastive_loss(
         y_true: npt.NDArray[np.float32], y_pred: npt.NDArray[np.float32]
     ):
-        square_pred = keras.ops.square(y_pred)
-        margin_square = keras.ops.square(keras.ops.maximum(margin - (y_pred), 0))
+        square_pred = tf.math.square(y_pred)
+        margin_square = tf.math.square(tf.math.maximum(margin - (y_pred), 0))
         # calcola la contrastive loss e fai la media per ogni coppia di labels passati
-        return keras.ops.mean((1 - y_true) * square_pred + (y_true) * margin_square)
+        return tf.math.reduce_mean((1 - y_true) * square_pred + (y_true) * margin_square)
 
     return _contrastive_loss
 

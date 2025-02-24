@@ -36,7 +36,6 @@ class Linear(keras.layers.Layer):
             ),  # shape del tensore di parametri, default (), cioe' scalar
             initializer="random_normal",  # init casuale. default "global_uniform" (floats) o "zeros" (int, bool, ...)
             trainable=True,  # valore default
-            autocast=False,  # dice se devi fare il cast del dtype nella call (default True)
             # regularizer - se applicare weight decay all'ottimizzazione del parametro
             # constraint - oggetto da chiamare dopo ogni update, o stringa di un constraint built-in, (def. None)
             name="weights",  # per debugging
@@ -47,7 +46,6 @@ class Linear(keras.layers.Layer):
             shape=(units,),
             initializer="zeros",
             trainable=True,
-            autocast=False,
             name="bias",
         )
         logging.info(
@@ -60,10 +58,10 @@ class Linear(keras.layers.Layer):
         # essendo nella classe che implementa un singolo layer, qui facciamo la L2 Regularization
         # quando si fa backprop, il contenuto add_loss verra' aggiunto all'upstream loss provenienti dagli altri rami
         # del grafo di computazione
-        output = keras.ops.add(keras.ops.matmul(inputs, self.w), self.b)
+        output = tf.math.add(tf.linalg.matmul(inputs, self.w), self.b)
         gamma = 1e-2
-        self.add_loss(keras.ops.sum(keras.ops.square(self.w)) * gamma)
-        self.add_loss(keras.ops.sum(keras.ops.square(self.b)) * gamma)
+        self.add_loss(tf.math.reduce_sum(tf.math.square(self.w)) * gamma)
+        self.add_loss(tf.math.reduce_sum(tf.math.square(self.b)) * gamma)
         return output
 
 
@@ -80,7 +78,7 @@ class ComputeSum(keras.layers.Layer):
         )
 
     def call(self, inputs: tf.Tensor) -> tf.Tensor:
-        self.total.assign_add(keras.ops.sum(inputs, axis=0))
+        self.total.assign_add(tf.math.reduce_sum(inputs, axis=0))
         return self.total
 
 
@@ -102,19 +100,13 @@ class MLPBlock(keras.layers.Layer):
             x
         )  # ritorno logits, serve sigmoide(binaria),softmax(naria) per probabilita'
 
-        # cross entropy loss
-        # self.add_loss(keras.ops.mean(keras.losses.categorical_crossentropy(
-        #    y_true=<nel ciclo di training, hai i labels a disposizione>,
-        #    y_pred=keras.ops.nn.softmax(logits),
-        # )))
-
         return logits
 
 
 # i moduli fondamentali sono keras.ops, keras.activations, keras.random, keras.layers, che sono backend-agnostic
 class MLPTrainer:
     def __init__(self, *, lr: float = 1e-2, batch_size: int = 32, epochs: int = 3):
-        self.optimizer = keras.optimizers.Adam(learning_rate=lr)
+        self.optimizer: keras.optimizers.Optimizer = keras.optimizers.Adam(learning_rate=lr)
         self.loss_fn = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
         self.batch_size = batch_size
         self.epochs = epochs
@@ -196,7 +188,8 @@ class MLPTrainer:
             logits = model(x, training=True)
             loss_value = self.loss_fn(y, logits)
         grads = tape.gradient(loss_value, model.trainable_weights)
-        self.optimizer.apply(grads, model.trainable_weights)
+        grads_and_vars = zip(grads, model.trainable_weights)
+        self.optimizer.apply_gradients(grads_and_vars)
         self.train_acc_metric.update_state(y, logits)
         return loss_value
 

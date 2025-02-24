@@ -19,6 +19,13 @@ def _find_first_matching_path(parent_path: Path, name_pattern: str) -> Path:
     matching_paths = [p for p in parent_path.iterdir() if regex.match(p.name)]
     return matching_paths[0]
 
+def _find_all_matching_path(parent_path: Path, name_pattern: str) -> list[Path]:
+    regex = re.compile(name_pattern)
+    for p in parent_path.iterdir():
+        print("- " + p.name)
+    matching_paths = [p for p in parent_path.iterdir() if regex.match(p.name)]
+    return matching_paths
+
 def _contains_dll_files(path: Path) -> bool:
     return any(file.suffix == '.dll' for file in path.iterdir() if file.is_file())
 
@@ -26,6 +33,7 @@ def _add_dll_path(path: Path) -> None:
     if not path.is_dir():
         raise ValueError(f"{str(path)} doesn't exist")
     os.add_dll_directory(path)
+    os.environ["Path"] = str(path) + ";" + os.environ.get("Path")
     print(f"Added {path} to User DLL path")
 
 def _process_directories(base_path: Path, predicate: Callable[[Path], bool], func: Callable[[Path], None]):
@@ -49,5 +57,6 @@ def add_dynamic_library_directories(base_path: Path, patterns: list[str], path_p
         if not base_path.is_dir():
             raise ValueError(f"Path {str(base_path)} is not a directory")
         for pattern in patterns:
-            base = path_processor(_find_first_matching_path(base_path, pattern))
-            _process_directories(base, _contains_dll_files, lambda p: _add_dll_path(_win32_short_path_from(p)))
+            for p in _find_all_matching_path(base_path, pattern):
+                base = path_processor(p)
+                _process_directories(base, _contains_dll_files, lambda p: _add_dll_path(_win32_short_path_from(p)))

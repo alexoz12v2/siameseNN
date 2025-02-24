@@ -76,7 +76,10 @@ def main(argv: list[str]) -> None:
     matplotlib.use("QtAgg")
     utils.set_keras_backend("tensorflow")
     keras.utils.set_random_seed(812)
-    tf.config.experimental.enable_op_determinism()
+
+    # su Tensorflow 2.10 GPU crasha
+    # tf.config.experimental.enable_op_determinism()
+
     logging.info(f"Active Keras Backend: {keras.backend.backend()}")
     logging.info(f"CUDA Devices: {tf.config.list_physical_devices('GPU')}")
 
@@ -205,11 +208,11 @@ def main(argv: list[str]) -> None:
 
     # convertiamo in tensore float valori normalizzati la immagine da PIL, crea asse del batch (a 1 perche hai 1 sola img)
     img_array = keras.utils.img_to_array(img)
-    img_array = keras.ops.expand_dims(img_array, 0)
+    img_array = tf.expand_dims(img_array, 0)
 
     predictions = model.predict(img_array)
     score = float(
-        keras.ops.sigmoid(predictions[0][0])
+        tf.math.sigmoid(predictions[0][0])
     )  # tira fuori il numero da asse dei batch(None) e num_classes(1)
     logging.info(
         f"This image is {100 * (1 - score):.2f}% cat and {100 * score:.2f}% dog.\n"

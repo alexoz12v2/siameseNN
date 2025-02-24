@@ -3,7 +3,7 @@
 # The `load` statement imports the symbol for the rule, in the defined
 # ruleset. When the symbol is loaded you can use the rule.
 load("@bazel_gazelle//:def.bzl", "gazelle")
-load("@s_pip_deps//:requirements.bzl", "all_whl_requirements")
+load("@pub//:requirements.bzl", "all_whl_requirements", "requirement")
 load("@rules_python//python:pip.bzl", "compile_pip_requirements")
 load("@rules_python_gazelle_plugin//manifest:defs.bzl", "gazelle_python_manifest")
 load("@rules_python_gazelle_plugin//modules_mapping:def.bzl", "modules_mapping")
@@ -41,7 +41,7 @@ modules_mapping(
 gazelle_python_manifest(
     name = "gazelle_python_manifest",
     modules_mapping = ":modules_map",
-    pip_repository_name = "pip",
+    pip_repository_name = "pub",
     requirements = "//:requirements_lock.txt",
 )
 

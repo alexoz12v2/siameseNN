@@ -21,7 +21,7 @@ use_repo(python, "python_versions")
 #  load("@<hub_name>//:requirements.bzl", "requirement")
 pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
 pip.parse(
-    hub_name = "s_pip_deps",
+    hub_name = "pub",
     #experimental_index_url = "https://download.pytorch.org/whl/cu121",
     #experimental_extra_index_urls = [ "https://pypi.org/simple" ],
     python_version = "3.10",
@@ -30,4 +30,4 @@ pip.parse(
     timeout = 3600,
 )
 
-use_repo(pip, "s_pip_deps")
+use_repo(pip, "pub")

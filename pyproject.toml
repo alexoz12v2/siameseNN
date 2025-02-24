@@ -4,13 +4,16 @@ name = "siameseNN"
 version = "1.0.0"
 dependencies = [
     "absl-py",
-    "keras >= 3.7",
+    "keras == 2.10.0",
+    "numpy < 2",
     "pyqt6",
     "pydot",
     "matplotlib",
-    "tensorflow[and-cuda] ; platform_system == 'Linux'", # On windows doesn't work unless you use WSL2. No.
-    "tensorflow-intel ; platform_system == 'Windows'",
-    # This should work on windows without WSL2.Tried, gives DLL error.
-    # "tensorflow-cpu >2.12 ; platform_system == 'Windows'",
-    # "tensorflow-directml-plugin ; platform_system == 'Windows'",
+    "tensorflow[and-cuda] == 2.10 ; platform_system == 'Linux'", # On windows doesn't work unless you use WSL2. No.
+    "tensorflow-gpu == 2.10 ; platform_system == 'Windows'",
+    "nvidia-pyindex ; platform_system == 'Windows'",
+    "nvidia-cuda-runtime-cu11==11.7.99 ; platform_system == 'Windows'",
+    "nvidia-cudnn-cu11==8.9.4.25 ; platform_system == 'Windows'",
+    "nvidia-cufft-cu11==10.9.0.58 ; platform_system == 'Windows'",
+    "nvidia-cusparse-cu11==11.7.5.86 ; platform_system == 'Windows'"
 ]

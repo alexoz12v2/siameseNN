@@ -59,7 +59,10 @@ def main(argv: list[str]) -> None:
     # hello keras
     utils.set_keras_backend("tensorflow")
     keras.utils.set_random_seed(812)
-    tf.config.experimental.enable_op_determinism()
+
+    # su Tensorflow 2.10 GPU crasha
+    # tf.config.experimental.enable_op_determinism()
+
     logging.info(f"Active Keras Backend: {keras.backend.backend()}")
     logging.info(f"CUDA Devices: {tf.config.list_physical_devices('GPU')}")
 
