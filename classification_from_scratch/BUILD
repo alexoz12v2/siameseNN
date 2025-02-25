@@ -24,7 +24,6 @@ py_binary(
         },
         "//conditions:default": {}
     }),
-    visibility = ["//:__subpackages__"],
     deps = [
         "//classification_from_scratch/class_utils:layers",
         "//utils",
