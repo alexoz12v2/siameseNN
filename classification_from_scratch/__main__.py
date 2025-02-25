@@ -2,11 +2,11 @@ from absl import logging
 from absl import app
 from pathlib import Path
 import numpy as np
-import utils.pyqt_import_hook
+import utils
 from PyQt6.QtWidgets import QApplication, QWidget
 import tensorflow as tf
 import keras
-import classification_from_scratch.class_utils as utils
+import classification_from_scratch.class_utils as cutils
 import matplotlib.pyplot as plt
 import matplotlib
 import pydot
@@ -68,13 +68,13 @@ def main(argv: list[str]) -> None:
     del argv
     logging.info("Hello World")
     logging.info(f"cwd: {Path.cwd()}")
-    data_path = Path.cwd() / "classification_from_scratch" / "extracted_files"
+    data_path = utils.base_file_path() / "classification_from_scratch" / "extracted_files"
     for line in compressed_tree(data_path):
         logging.info(line)
 
     # hello
     matplotlib.use("QtAgg")
-    utils.set_keras_backend("tensorflow")
+    cutils.set_keras_backend("tensorflow")
     keras.utils.set_random_seed(812)
 
     # su Tensorflow 2.10 GPU crasha
@@ -109,7 +109,7 @@ def main(argv: list[str]) -> None:
     image_size = (256, 256)
     # c'e una immagine corrotta nel dataset che non riesco a filtrare, allora ne prendo 50
     # e prego che sia corretta
-    utils.select_valid_images(
+    cutils.select_valid_images(
         input_path, output_path, return_if_exists=True, max_images=50
     )
     dataset_train, dataset_val = keras.utils.image_dataset_from_directory(
@@ -149,7 +149,7 @@ def main(argv: list[str]) -> None:
     logging.info(
         "Visualising the first 9 images of the dataset, close the window to proceed...\n"
     )
-    utils.visualize_first_9_images(
+    cutils.visualize_first_9_images(
         dataset_train, transpose=False, batch_size=batch_size
     )
     plt.show(block=True)
@@ -159,7 +159,7 @@ def main(argv: list[str]) -> None:
         logging.info("Close the Window to continue...\n")
         for i in range(9):
             ax: Axes = plt.subplot(3, 3, i + 1)
-            augmented_images = utils.augment_images_from_batch(images)
+            augmented_images = cutils.augment_images_from_batch(images)
             plt.imshow(np.array(augmented_images[0]).astype("uint8"))
             plt.axis("off")
         plt.show(block=True)
@@ -167,7 +167,7 @@ def main(argv: list[str]) -> None:
     logging.info(
         f"Creating a model for cats_and_dogs dataset, with {image_size} input size and 2 classes"
     )
-    model = utils.make_model(input_shape=image_size + (3,), num_classes=2)
+    model = cutils.make_model(input_shape=image_size + (3,), num_classes=2)
 
     # questa funzione salva il modello in {cwd}/model.png, che quindi puoi o aprire da qua o
     # aprire manualmente, vedi nel bazel sandbox attraverso il convenience symlink `bazel-bin`
