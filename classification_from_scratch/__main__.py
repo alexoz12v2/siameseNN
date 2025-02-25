@@ -68,7 +68,9 @@ def main(argv: list[str]) -> None:
     del argv
     logging.info("Hello World")
     logging.info("cwd: %s", str(Path.cwd()))
-    data_path = utils.base_file_path() / "classification_from_scratch" / "extracted_files"
+    data_path = (
+        utils.base_file_path() / "classification_from_scratch" / "extracted_files"
+    )
     for line in compressed_tree(data_path):
         logging.info(line)
 
@@ -81,7 +83,7 @@ def main(argv: list[str]) -> None:
     # tf.config.experimental.enable_op_determinism()
 
     logging.info("Active Keras Backend: %s", keras.backend.backend())
-    logging.info("CUDA Devices: %s", tf.config.list_physical_devices('GPU'))
+    logging.info("CUDA Devices: %s", tf.config.list_physical_devices("GPU"))
 
     # prova a caricare il dataset
     batch_size = 8
@@ -106,8 +108,12 @@ def main(argv: list[str]) -> None:
     )
 
     logging.info("Dataset for training and validation created.")
-    logging.info("\tTrain:      %d batches of %d", dataset_train.cardinality(), batch_size)
-    logging.info("\tValidation: %d batches of %d", dataset_val.cardinality(), batch_size)
+    logging.info(
+        "\tTrain:      %d batches of %d", dataset_train.cardinality(), batch_size
+    )
+    logging.info(
+        "\tValidation: %d batches of %d", dataset_val.cardinality(), batch_size
+    )
 
     # visualizza 9 immagini
     logging.info(
@@ -129,7 +135,8 @@ def main(argv: list[str]) -> None:
         plt.show(block=True)
 
     logging.info(
-        "Creating a model for cats_and_dogs dataset, with %s input size and 2 classes", image_size
+        "Creating a model for cats_and_dogs dataset, with %s input size and 2 classes",
+        image_size,
     )
     model = cutils.make_model(input_shape=image_size + (3,), num_classes=2)
 
@@ -150,7 +157,8 @@ def main(argv: list[str]) -> None:
         metrics=[keras.metrics.BinaryAccuracy(name="acc")],
     )
     logging.info(
-        "Started traning with Adam Optimizer, CrossEntropy loss, Binary Accuracy for %d epochs", epochs
+        "Started traning with Adam Optimizer, CrossEntropy loss, Binary Accuracy for %d epochs",
+        epochs,
     )
     # allena!
     model.fit(
@@ -165,7 +173,8 @@ def main(argv: list[str]) -> None:
     img_path = next((output_path / "Cat").iterdir())
     img = keras.utils.load_img(str(img_path), target_size=image_size)
     logging.info(
-        "Trying inference with image Cat/%s, showing it. Close window to continue...", img_path.name
+        "Trying inference with image Cat/%s, showing it. Close window to continue...",
+        img_path.name,
     )
     plt.imshow(img)
     plt.show(block=True)

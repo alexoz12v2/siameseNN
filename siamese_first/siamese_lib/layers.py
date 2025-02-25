@@ -254,7 +254,9 @@ class SiameseModel(keras.Model):
             shape = tf.shape(inputs)  # Dynamic shape for graph mode
 
             def split_last_dim():
-                return tuple(tf.unstack(inputs, num=3, axis=-1))  # Returns tuple of tensors
+                return tuple(
+                    tf.unstack(inputs, num=3, axis=-1)
+                )  # Returns tuple of tensors
 
             # We must ensure that tf.cond always returns tensors, so we return dummy tensors in error cases
             def invalid_shape_case():
@@ -272,9 +274,9 @@ class SiameseModel(keras.Model):
 
             return self.siamese_network(inputs)
 
-        raise ValueError(f"Invalid input type: Expected tuple, list, or tensor, but got {type(inputs)}")
-
-
+        raise ValueError(
+            f"Invalid input type: Expected tuple, list, or tensor, but got {type(inputs)}"
+        )
 
     def train_step(self, data: _TupleType) -> dict[str, float]:
         # train_step e' una funzione chiamata durante il model.fit(), nel quale
@@ -350,7 +352,9 @@ def download_mnist() -> MNISTDatasetOutput:
         "value": f" = {envvar}" if envvar is not None else "",
     }
 
-    logging.info("Downloading MNIST dataset in %s %s", logstrs["where"], logstrs["value"])
+    logging.info(
+        "Downloading MNIST dataset in %s %s", logstrs["where"], logstrs["value"]
+    )
 
     (x_train_val, y_train_val), (x_test, y_test) = keras.datasets.mnist.load_data()
 
@@ -473,9 +477,7 @@ def mnist_visualize(
 
         # mostra iesima coppia, prima e seconda immagine
         ax.imshow(
-            tf.concat(
-                [dataset_pairs.pairs[i][0], dataset_pairs.pairs[i][1]], axis=1
-            ),
+            tf.concat([dataset_pairs.pairs[i][0], dataset_pairs.pairs[i][1]], axis=1),
             cmap="gray",
         )
         ax.set_axis_off()
@@ -507,7 +509,9 @@ def contrastive_loss(margin=1):
         square_pred = tf.math.square(y_pred)
         margin_square = tf.math.square(tf.math.maximum(margin - (y_pred), 0))
         # calcola la contrastive loss e fai la media per ogni coppia di labels passati
-        return tf.math.reduce_mean((1 - y_true) * square_pred + (y_true) * margin_square)
+        return tf.math.reduce_mean(
+            (1 - y_true) * square_pred + (y_true) * margin_square
+        )
 
     return _contrastive_loss
 

@@ -49,7 +49,7 @@ def main(argv: list[str]) -> None:
     logging.info("Hello World!")
     apputils.keras_utils.set_keras_backend("tensorflow")
     logging.info("Active Keras Backend: %s", tf.keras.backend.backend())
-    logging.info("CUDA Devices: %s", tf.config.list_physical_devices('GPU'))
+    logging.info("CUDA Devices: %s", tf.config.list_physical_devices("GPU"))
 
     my_linear = apputils.layers.MLPBlock()
     num_batches = 10

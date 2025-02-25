@@ -107,7 +107,9 @@ class MLPBlock(keras.layers.Layer):
 # i moduli fondamentali sono keras.ops, keras.activations, keras.random, keras.layers, che sono backend-agnostic
 class MLPTrainer:
     def __init__(self, *, lr: float = 1e-2, batch_size: int = 32, epochs: int = 3):
-        self.optimizer: keras.optimizers.Optimizer = keras.optimizers.Adam(learning_rate=lr)
+        self.optimizer: keras.optimizers.Optimizer = keras.optimizers.Adam(
+            learning_rate=lr
+        )
         self.loss_fn = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
         self.batch_size = batch_size
         self.epochs = epochs
@@ -161,7 +163,9 @@ class MLPTrainer:
                         step,
                         float(loss_value),
                     )
-                    logging.info("Seen so far: %d samples", (step + 1) * self.batch_size)
+                    logging.info(
+                        "Seen so far: %d samples", (step + 1) * self.batch_size
+                    )
 
             # mostra la accuracy per la epoca corrente
             train_acc = self.train_acc_metric.result()

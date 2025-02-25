@@ -64,7 +64,7 @@ def main(argv: list[str]) -> None:
     # tf.config.experimental.enable_op_determinism()
 
     logging.info("Active Keras Backend: %s", keras.backend.backend())
-    logging.info("CUDA Devices: %s", tf.config.list_physical_devices('GPU'))
+    logging.info("CUDA Devices: %s", tf.config.list_physical_devices("GPU"))
 
     logging.info(
         "You passed flags: %s %s",
@@ -89,7 +89,7 @@ def main(argv: list[str]) -> None:
             loss=apputils.contrastive_loss(margin=margin),
             optimizer="RMSprop",
             metrics=["accuracy"],
-            weighted_metrics=[]
+            weighted_metrics=[],
         )
         siamese_model.summary()
         # esempio di history data
