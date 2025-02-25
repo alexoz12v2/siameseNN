@@ -168,7 +168,8 @@ def triplet_embedding_model(target_shape: Tuple[int, int]) -> keras.Model:
         "value": f" = {envvar}" if envvar is not None else "",
     }
     logging.info(
-        f"about to download ResNet50 imagenet's weights to {logstrs['where'] + logstrs['value']}"
+        "About to download ResNet50 ImageNet's weights to %s",
+        logstrs["where"] + logstrs["value"],
     )
     base_cnn = keras.applications.resnet.ResNet50(
         weights="imagenet", input_shape=target_shape + (3,), include_top=False
@@ -348,14 +349,20 @@ def download_mnist() -> MNISTDatasetOutput:
         "where": "KERAS_HOME" if envvar is not None else "${Home}/.keras",
         "value": f" = {envvar}" if envvar is not None else "",
     }
-    logging.info(f"Downloading MNIST datset in {logstrs['where']} {logstrs['value']}")
+
+    logging.info("Downloading MNIST dataset in %s %s", logstrs["where"], logstrs["value"])
+
     (x_train_val, y_train_val), (x_test, y_test) = keras.datasets.mnist.load_data()
+
     logging.info(
-        f"downloaded MNIST. Are they NpzFiles? {isinstance(x_train_val, np.lib.npyio.NpzFile)}"
+        "Downloaded MNIST. Are they NpzFiles? %s",
+        isinstance(x_train_val, np.lib.npyio.NpzFile),
     )
     logging.info(
-        f"downloaded MNIST. Are they array[dtype=uint8]? {isinstance(x_train_val, np.ndarray) and x_train_val.dtype == np.uint8}"
+        "Downloaded MNIST. Are they array[dtype=uint8]? %s",
+        isinstance(x_train_val, np.ndarray) and x_train_val.dtype == np.uint8,
     )
+
     # to floating point
     x_train_val: npt.NDArray[np.float32] = x_train_val.astype(np.float32)
     x_test: npt.NDArray[np.float32] = x_test.astype(np.float32)

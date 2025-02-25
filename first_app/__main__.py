@@ -48,23 +48,24 @@ def main(argv: list[str]) -> None:
     del argv
     logging.info("Hello World!")
     apputils.keras_utils.set_keras_backend("tensorflow")
-    logging.info(f"Active Keras Backend: {tf.keras.backend.backend()}")
-    logging.info(f"CUDA Devices: {tf.config.list_physical_devices('GPU')}")
+    logging.info("Active Keras Backend: %s", tf.keras.backend.backend())
+    logging.info("CUDA Devices: %s", tf.config.list_physical_devices('GPU'))
 
     my_linear = apputils.layers.MLPBlock()
     num_batches = 10
     input = tf.random.normal(shape=(num_batches, 32))
     out = my_linear(input)
-    logging.info(f"output from MLP: {tf.squeeze(out)}")
+    logging.info("output from MLP: %s", str(tf.squeeze(out)))
     logging.info(
-        f"layer.losses:    {[tfloss.numpy().item() for tfloss in my_linear.losses]}"
+        "layer.losses:    %s",
+        [tfloss.numpy().item() for tfloss in my_linear.losses],
     )
 
     dataset = synthetic_dataset()
-    logging.info(f"x_train: {dataset['x_train'].shape}")
-    logging.info(f"y_train: {dataset['y_train'].shape}")
-    logging.info(f"x_val:   {dataset['x_val'].shape}")
-    logging.info(f"y_val:   {dataset['y_val'].shape}")
+    logging.info("x_train: %s", dataset["x_train"].shape)
+    logging.info("y_train: %s", dataset["y_train"].shape)
+    logging.info("x_val:   %s", dataset["x_val"].shape)
+    logging.info("y_val:   %s", dataset["y_val"].shape)
 
     trainer = apputils.layers.MLPTrainer()
     trainer.epochs = 100

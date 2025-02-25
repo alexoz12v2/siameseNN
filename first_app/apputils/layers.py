@@ -49,7 +49,8 @@ class Linear(keras.layers.Layer):
             name="bias",
         )
         logging.info(
-            f"the trainable layers are {''.join([str(weight.shape) for weight in self.trainable_weights ])}"
+            "The trainable layers are %s",
+            "".join(str(weight.shape) for weight in self.trainable_weights),
         )
 
     def call(self, inputs: tf.Tensor) -> tf.Tensor:
@@ -133,7 +134,7 @@ class MLPTrainer:
 
         for epoch in range(self.epochs):
             logging.info("-" * 40)
-            logging.info(f"Start of epoch {epoch}")
+            logging.info("Start of epoch %d", epoch)
             logging.info("-" * 40)
             start_time = time.time()
             for step, (x_batch_train, y_batch_train) in enumerate(train_dataset):
@@ -156,13 +157,15 @@ class MLPTrainer:
                 # logga ogni 100 steps
                 if step % 100 == 0:
                     logging.info(
-                        f"Training Loss (for 1 batch) at step {step}: {float(loss_value):.4f}"
+                        "Training Loss (for 1 batch) at step %d: %.4f",
+                        step,
+                        float(loss_value),
                     )
-                    logging.info(f"Seen so far: {(step + 1) * self.batch_size} samples")
+                    logging.info("Seen so far: %d samples", (step + 1) * self.batch_size)
 
             # mostra la accuracy per la epoca corrente
             train_acc = self.train_acc_metric.result()
-            logging.info(f"Training acc over epoch: {float(train_acc):.4f}")
+            logging.info("Training acc over epoch: %.4f", float(train_acc))
 
             # resetta la metrica prima della prossima epoca
             self.train_acc_metric.reset_state()
@@ -175,8 +178,8 @@ class MLPTrainer:
                 # self.val_acc_metric.update_state(y_batch_val, val_logits)
             val_acc = self.val_acc_metric.result()
             self.val_acc_metric.reset_state()
-            logging.info(f"Validation Acc: {float(val_acc):.4f}")
-            logging.info(f"Time Taken:     {time.time() - start_time:.2f} s")
+            logging.info("Validation Acc: %.4f", float(val_acc))
+            logging.info("Time Taken:     %.2f s", time.time() - start_time)
 
     # se le funzioni sono compilate come nodo statico di un grafo di computazione, non le puoi debuggare, pero vanno piu
     # veloce

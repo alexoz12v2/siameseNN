@@ -131,7 +131,7 @@ def custom_image_dataset_from_directory(
             tf.TensorSpec(shape=(), dtype=tf.int32),
         ),
     )
-    logging.info(f"dataset before batch+prefetch = {dataset}")
+    logging.info("dataset before batch+prefetch = %s", str(dataset))
     # se non va, usa dataset.reduce(0, lambda x,_: x+1).numpy()
     # dataset_length = tf.data.experimental.cardinality(dataset).numpy()
     dataset_length = dataset.reduce(0, lambda x, _: x + 1)

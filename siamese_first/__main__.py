@@ -55,7 +55,7 @@ def compressed_tree(dir_path: Path, prefix: str = ""):
 
 def main(argv: list[str]) -> None:
     logging.info("Hello World")
-    logging.info(f"cwd: {Path.cwd()}")
+    logging.info("cwd: %s", str(Path.cwd()))
     # hello keras
     apputils.set_keras_backend("tensorflow")
     keras.utils.set_random_seed(812)
@@ -63,17 +63,13 @@ def main(argv: list[str]) -> None:
     # su Tensorflow 2.10 GPU crasha
     # tf.config.experimental.enable_op_determinism()
 
-    logging.info(f"Active Keras Backend: {keras.backend.backend()}")
-    logging.info(f"CUDA Devices: {tf.config.list_physical_devices('GPU')}")
+    logging.info("Active Keras Backend: %s", keras.backend.backend())
+    logging.info("CUDA Devices: %s", tf.config.list_physical_devices('GPU'))
 
-    # usa absl, non argparse
-    # parser = ArgumentParser()
-    # parser.add_argument("-c", "--contrastive-loss", action="store_true")
-    # parser.add_argument("-f", "--fast-train", action="store_true")
-    # args = parser.parse_args(argv[1:]) # e' il default
-    # logging.info(f"you passed --contrastive-loss={args.contrastive_loss}, --fast-train={args.fast_train}")
     logging.info(
-        f"you passed flags: {'--contrastive-loss' if FLAGS['contrastive-loss'].value else ''} {'--fast-train' if FLAGS['fast-train'].value else ''}"
+        "You passed flags: %s %s",
+        "--contrastive-loss" if FLAGS["contrastive-loss"].value else "",
+        "--fast-train" if FLAGS["fast-train"].value else "",
     )
 
     batch_size = 8
@@ -192,8 +188,8 @@ def main(argv: list[str]) -> None:
         cosine_similarity = keras.metrics.CosineSimilarity()
         positive_similarity = cosine_similarity(anchor_emb, positive_emb)
         negative_similarity = cosine_similarity(anchor_emb, negative_emb)
-        logging.info(f"Positive Similarity: {positive_similarity.numpy()}")
-        logging.info(f"Negative Similarity: {negative_similarity.numpy()}")
+        logging.info("Positive Similarity: %s", positive_similarity.numpy())
+        logging.info("Negative Similarity: %s", negative_similarity.numpy())
 
     input("press any key to exit...")
 
