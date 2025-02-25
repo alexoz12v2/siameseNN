@@ -1,4 +1,4 @@
-load("@rules_python//python:python.bzl", "py_binary")
+load("@rules_python//python:python.bzl", "py_library")
 load("@pub//:requirements.bzl", "requirement", "data_requirement")
 
 py_library(

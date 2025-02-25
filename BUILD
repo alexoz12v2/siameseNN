@@ -63,7 +63,7 @@ gazelle(
 pkg_zip(
     name = "app_zip",
     srcs = [ 
-        "//app:keras_test", 
+        "//first_app:keras_test", 
         "//classification_from_scratch:classification_from_scratch",
         "//siamese_first:siamese_first",
         #"//app:keras_test.venv", 

@@ -17,6 +17,7 @@ py_binary(
     name = "classification_from_scratch",
     srcs = ["__main__.py"],
     main = "__main__.py",
+    visibility = ["//visibility:public"],
     env = select({
         "@bazel_tools//src/conditions:windows": {
             "BAZEL_FIX_DLL": "Y"

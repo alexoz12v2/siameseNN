@@ -5,6 +5,7 @@ py_binary(
     name = "keras_test",
     srcs = ["__main__.py"],
     main = "__main__.py",
+    visibility = ["//visibility:public"],
     deps = [
         "//first_app/apputils:layers",
         "//utils"
