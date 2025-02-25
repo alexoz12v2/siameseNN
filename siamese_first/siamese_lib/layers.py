@@ -245,8 +245,35 @@ class SiameseModel(keras.Model):
         self.loss_tracker = keras.metrics.Mean(name="loss")
 
     def call(self, inputs: _TupleType) -> Tuple[tf.Tensor, tf.Tensor]:
-        # input: tripletta di batch di immagini
-        return self.siamese_network(inputs)
+        # If inputs is already a tuple/list of 3 tensors, pass it directly
+        if isinstance(inputs, (tuple, list)) and len(inputs) == 3:
+            return self.siamese_network(inputs)
+
+        if isinstance(inputs, tf.Tensor):
+            shape = tf.shape(inputs)  # Dynamic shape for graph mode
+
+            def split_last_dim():
+                return tuple(tf.unstack(inputs, num=3, axis=-1))  # Returns tuple of tensors
+
+            # We must ensure that tf.cond always returns tensors, so we return dummy tensors in error cases
+            def invalid_shape_case():
+                return (
+                    tf.zeros_like(inputs),
+                    tf.zeros_like(inputs),
+                    tf.zeros_like(inputs),
+                )
+
+            inputs = tf.cond(
+                tf.equal(shape[-1], 3),  # If last dimension is 3
+                split_last_dim,
+                invalid_shape_case,  # Must return valid tensors
+            )
+
+            return self.siamese_network(inputs)
+
+        raise ValueError(f"Invalid input type: Expected tuple, list, or tensor, but got {type(inputs)}")
+
+
 
     def train_step(self, data: _TupleType) -> dict[str, float]:
         # train_step e' una funzione chiamata durante il model.fit(), nel quale
@@ -289,7 +316,7 @@ class SiameseModel(keras.Model):
         return loss
 
     @property
-    def metrics(self) -> list[keras.Metric]:
+    def metrics(self) -> list[keras.metrics.Metric]:
         # listo le metriche che ritorno nel training step affinche possano
         # essere resettate con `reset_states()`
         return [self.loss_tracker]

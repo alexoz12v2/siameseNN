@@ -34,28 +34,9 @@ py_binary(
         "//conditions:default": {}
     }),
     deps = [
+        "//utils",
         "//siamese_first/siamese_lib",
-        requirement("absl_py"),
-        requirement("keras"),
-        requirement("matplotlib"),
-        requirement("numpy"),
-        requirement("pydot"),
-        requirement("pyqt6"),
-    ] + select({
-        "@bazel_tools//src/conditions:linux": [
-            requirement("tensorflow[and-cuda]") # testare se funziona
-        ],
-        "@bazel_tools//src/conditions:windows": [
-            requirement("tensorflow-gpu"),
-            requirement("nvidia-cublas-cu11"),
-            requirement("nvidia-cuda-nvrtc-cu11"),
-            requirement("nvidia-cuda-runtime-cu11"),
-            requirement("nvidia-cudnn-cu11"),
-            requirement("nvidia-cufft-cu11"),
-            requirement("nvidia-cusparse-cu11"),
-        ],
-        "//conditions:default": []
-    }),
+    ],
     data = [
         ":siamese_left",
         ":siamese_right",

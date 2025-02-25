@@ -1,18 +1,18 @@
 from pathlib import Path
 
-import keras
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pydot
+import utils
 import tensorflow as tf
+import keras
+import siamese_first.siamese_lib.layers as apputils
 from absl import app, flags, logging
 from matplotlib.axes import Axes
-import utils.pyqt_import_hook
 from PyQt6.QtWidgets import QApplication, QWidget
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
-import siamese_first.siamese_lib as utils
 
 # from argparse import ArgumentParser
 
@@ -57,7 +57,7 @@ def main(argv: list[str]) -> None:
     logging.info("Hello World")
     logging.info(f"cwd: {Path.cwd()}")
     # hello keras
-    utils.set_keras_backend("tensorflow")
+    apputils.set_keras_backend("tensorflow")
     keras.utils.set_random_seed(812)
 
     # su Tensorflow 2.10 GPU crasha
@@ -83,16 +83,17 @@ def main(argv: list[str]) -> None:
     # if args.contrastive_loss:
     if FLAGS["contrastive-loss"].value:
         clamp_num = 30 if FLAGS["fast-train"].value else None
-        dataset = utils.download_mnist()
+        dataset = apputils.download_mnist()
         logging.info(
             "Visualising 4 image pairs from MNIST (Close the window to continue)..."
         )
-        utils.mnist_visualize(dataset.train, go_on=False, to_show=4, num_col=2)
-        siamese_model = utils.contrastive_siamese_model()
+        apputils.mnist_visualize(dataset.train, go_on=False, to_show=4, num_col=2)
+        siamese_model = apputils.contrastive_siamese_model()
         siamese_model.compile(
-            loss=utils.contrastive_loss(margin=margin),
+            loss=apputils.contrastive_loss(margin=margin),
             optimizer="RMSprop",
             metrics=["accuracy"],
+            weighted_metrics=[]
         )
         siamese_model.summary()
         # esempio di history data
@@ -115,14 +116,14 @@ def main(argv: list[str]) -> None:
         # utils.plt_metric(history=history.history, metric="accuracy", title="Model Accuracy")
         # utils.plt_metric(history=history.history, metric="loss", title="Contrastive Loss")
         fig, axs = plt.subplots(1, 2, figsize=(12, 6))
-        utils.add_metric_plot(
+        apputils.add_metric_plot(
             history.history,
             metric="loss",
             title="Model Loss",
             ax=axs[0],
             has_valid=True,
         )
-        utils.add_metric_plot(
+        apputils.add_metric_plot(
             history.history,
             metric="accuracy",
             title="Model Accuracy",
@@ -139,7 +140,7 @@ def main(argv: list[str]) -> None:
         siamese_left_path = base_path / "siamese_left" / "left"
         siamese_right_path = base_path / "siamese_right" / "right"
 
-        dataset_train, dataset_val = utils.triplet_datasets(
+        dataset_train, dataset_val = apputils.triplet_datasets(
             siamese_left_path,
             siamese_right_path,
             batch_size=batch_size,
@@ -154,12 +155,12 @@ def main(argv: list[str]) -> None:
         # it =dataset_train.take(1).as_numpy_iterator() -> NumpyIterator di una terna di buffer 3D
         # list(it) -> accumula tutti gli elementi dell'iteratore in una lista
         # (*list(it)[0], ) -> prendi la prima terna del batch ed espandila in una tupla
-        utils.visualize(*(next(dataset_train.take(1).as_numpy_iterator())))
+        apputils.visualize(*(next(dataset_train.take(1).as_numpy_iterator())))
 
         logging.info(
             'creating siamese model and outputting its png structure to working dir as "siamese.png"...'
         )
-        siamese_model = utils.SiameseModel(target_shape)
+        siamese_model = apputils.SiameseModel(target_shape)
         siamese_model.build(target_shape + (3,))
         keras.utils.plot_model(siamese_model, show_shapes=True, to_file="siamese.png")
         siamese_model.compile(optimizer=keras.optimizers.Adam(1e-4))
@@ -173,7 +174,7 @@ def main(argv: list[str]) -> None:
             "Training complete! Picking up a sample from the val dataset (Close the window to comtinue)"
         )
         sample = next(iter(dataset_val))
-        utils.visualize(*sample, go_on=True)
+        apputils.visualize(*sample, go_on=True)
         anchor_emb, positive_emb, negative_emb = (
             siamese_model.embedding(
                 keras.applications.resnet.preprocess_input(sample[0])

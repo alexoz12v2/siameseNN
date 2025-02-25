@@ -3,6 +3,7 @@ load("@pub//:requirements.bzl", "requirement", "data_requirement")
 
 py_library(
     name = "siamese_lib",
+    visibility = [ "//visibility:public" ],
     srcs = [
         "__init__.py",
         "layers.py",
@@ -14,6 +15,7 @@ py_library(
         requirement("matplotlib"),
         requirement("numpy"),
         requirement("pillow"),
+        requirement("pyqt6"),
         requirement("pydot"),
     ] + select({
         "@bazel_tools//src/conditions:linux": [
