@@ -129,7 +129,7 @@ def main(argv: list[str]) -> None:
         plt.show(block=True)
 
     logging.info(
-        "Creating a model for cats_and_dogs dataset, with %d input size and 2 classes", image_size
+        "Creating a model for cats_and_dogs dataset, with %s input size and 2 classes", image_size
     )
     model = cutils.make_model(input_shape=image_size + (3,), num_classes=2)
 
