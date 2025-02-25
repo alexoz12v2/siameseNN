@@ -45,7 +45,33 @@ class CUDAImportHook(MetaPathFinder, Loader):
             lambda p: p
         )
 
+def is_running_from_bazel() -> bool:
+    return "runfiles" in sys.executable or "bazel-out" in sys.executable
+
+def base_file_path() -> Path:
+    if is_running_from_bazel():
+        return Path(sys.argv[0]).parent.parent.parent.resolve() / "_main"
+    elif "runfiles" in str(Path.cwd()): 
+        return Path.cwd()
+    else: # assuming we are on the workspace with convenience symlinks, and that you already did bazel build
+        path = str(Path(sys.argv[0]).resolve())
+        print("asdfjskaldfjdkfjla s ", path)
+        base = "siameseNN"
+
+        # Get the substring after "siameseNN"
+        _, after_base = path.split(base + os.path.sep, 1)
+
+        # Remove "__main__.py" and trailing separators
+        result = after_base.rsplit(os.path.sep + "__main__.py", 1)[0]
+        bpath = sys.argv[0].split(os.path.sep)[-2]
+        if platform.system() == "Windows":
+            runfiles = bpath + ".exe.runfiles"
+        else:
+            runfiles = bpath + ".runfiles"
+        return (Path.cwd() / "bazel-bin" / result / runfiles / "_main").resolve()
+        
+
 # Register the import hook
-if platform.system() == "Windows" and os.environ.get("BAZEL_FIX_DLL") is not None:
+if platform.system() == "Windows" and is_running_from_bazel() is not None:
     sys.meta_path.insert(0, PyQtImportHook(Path(sys.argv[0]).parent.parent.parent.resolve()))
     sys.meta_path.insert(0, CUDAImportHook(Path(sys.argv[0]).parent.parent.parent.resolve()))

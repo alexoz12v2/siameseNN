@@ -10,10 +10,4 @@ py_binary(
         "//first_app/apputils:layers",
         "//utils"
     ],
-    env = select({
-        "@bazel_tools//src/conditions:windows": {
-            "BAZEL_FIX_DLL": "Y"
-        },
-        "//conditions:default": {}
-    }),
 )

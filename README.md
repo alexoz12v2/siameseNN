@@ -255,3 +255,17 @@ Nel Virtual Environment o da codice
 ```sh
 python -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))"
 ```
+
+# Packaging su windows
+Il comando 
+```
+bazel build //:app_zip
+```
+
+Genera nella `bazel-bin` un `app_zip.zip` contenente tutti i files necessari per eseguire l'applicazione. Su windows, con `--build_python_zip=false`, la 
+struttura delle directories dei runfiles generata e' incorretta. In particolare, in ogni cartella il cui nome termina con `runfiles`, e' contenuta soltanto la 
+cartella `_main`.
+Dovrebbe invece contenere anche tutte le cartelle il cui nome incomincia per `rules_python`, le quali finiscono in `_main` per via dell'implementazione di `pkg_zip`.
+Due possibili soluzioni
+1. Modificare il `.bazelrc` per utilizzare i python zips`--build_python_zip=true`, i quali rallentano lo sviluppo
+2. Aggiustare manualmente la struttura delle directories nel `app_zip.zip`, dopo averne estratto il contenuto

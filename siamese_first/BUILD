@@ -27,12 +27,6 @@ py_binary(
     srcs = ["__main__.py"],
     main = "__main__.py",
     visibility = ["//visibility:public"],
-    env = select({
-        "@bazel_tools//src/conditions:windows": {
-            "BAZEL_FIX_DLL": "Y"
-        },
-        "//conditions:default": {}
-    }),
     deps = [
         "//utils",
         "//siamese_first/siamese_lib",

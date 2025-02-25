@@ -136,7 +136,8 @@ def main(argv: list[str]) -> None:
 
         # paths: I dataset left e right hanno immagini numerate jpg. le coppie aventi lo
         # stesso numero corrispondono alla stessa persona
-        base_path = Path.cwd() / "siamese_first"
+        logging.info("Base Path: %s", str(utils.base_file_path()))
+        base_path = utils.base_file_path() / "siamese_first"
         siamese_left_path = base_path / "siamese_left" / "left"
         siamese_right_path = base_path / "siamese_right" / "right"
 
