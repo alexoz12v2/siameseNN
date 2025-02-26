@@ -67,9 +67,21 @@ pkg_zip(
         "//first_app:keras_test", 
         "//classification_from_scratch:classification_from_scratch",
         "//siamese_first:siamese_first",
-        #"//app:keras_test.venv", 
-        #"//classification_from_scratch:classification_from_scratch.venv",
-        #"//siamese_first:siamese_first.venv",
+        "//siamese_second",
+    ] + select({
+        "@bazel_tools//src/conditions:linux": [
+            ":start.sh"
+        ],
+        "//conditions:default": []
+    }),
+    include_runfiles = True,
+)
+
+pkg_zip(
+    name = "app_zip.light",
+    visibility = [ "//visibility:public" ],
+    srcs = [
+        "//siamese_second",
     ] + select({
         "@bazel_tools//src/conditions:linux": [
             ":start.sh"

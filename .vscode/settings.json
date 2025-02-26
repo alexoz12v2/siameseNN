@@ -23,6 +23,11 @@
         }
     },
     "terminal.integrated.defaultProfile.windows": "DevPS164",
-    "python.analysis.languageServerMode": "light",
-    "python.autoComplete.extraPaths": [${workspaceFolder}]
+    "python.analysis.languageServerMode": "default",
+    "python.autoComplete.extraPaths": ["/home/alessio/programming/siameseNN"],
+    "python.analysis.exclude": [
+        "**/bazel-bin", 
+        "**/bazel-out", 
+        "**/bazel-siameseNN", 
+    ]
 }

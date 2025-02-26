@@ -4,16 +4,30 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # List of valid executables
-VALID_EXECUTABLES=("keras_test" "classification_from_scratch" "siamese_first")
+VALID_EXECUTABLES=("keras_test" "classification_from_scratch" "siamese_first" "siamese_second")
 
 # Ensure an executable is passed
 if [ -z "$1" ]; then
-    echo "Usage: $0 <executable_name>"
+    echo "Usage: $0 <executable_name> [-- additional arguments]"
     echo "Valid executables: ${VALID_EXECUTABLES[*]}"
     exit 1
 fi
 
+# Extract executable name
 EXECUTABLE="$1"
+shift  # Remove the executable name from arguments
+
+# Capture additional arguments after "--"
+EXTRA_ARGS=()
+PASSTHROUGH=false
+for arg in "$@"; do
+    if [ "$PASSTHROUGH" = true ]; then
+        EXTRA_ARGS+=("$arg")
+    elif [ "$arg" == "--" ]; then
+        PASSTHROUGH=true
+    fi
+done
+
 RUNFILES_DIR="$SCRIPT_DIR/${EXECUTABLE}.runfiles"
 
 # Check if the executable is valid
@@ -49,9 +63,9 @@ $RUNFILES_DIR/rules_python~~pip~pub_310_nvidia_cublas_cu12/site-packages/nvidia/
 
 export XLA_FLAGS="--xla_gpu_cuda_data_dir=$RUNFILES_DIR/rules_python~~pip~pub_310_nvidia_cuda_nvcc_cu12/site-packages/nvidia/cuda_nvcc"
 
-# Run the executable
+# Run the executable with additional arguments
 echo "Running $EXECUTABLE with configured environment..."
-"$SCRIPT_DIR/$EXECUTABLE"
+"$SCRIPT_DIR/$EXECUTABLE" "${EXTRA_ARGS[@]}"
 
 # Restore the original environment
 export LD_LIBRARY_PATH="$OLD_LD_LIBRARY_PATH"

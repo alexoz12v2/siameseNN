@@ -2,6 +2,8 @@
 ## Passaggi Preliminari
 - Installazione software necessario e preparazione ambiente
 - rinominare `.bazelrc_linux` o `.bazelrc_windows` in `.bazelrc`
+- rinominare, in ciascun `BUILD` file contenente un `py_binary`, tutte le variabili nell'`LD_LIBRARY_PATH` affinche' il prefisso della path
+  alla repository corrisponda alla path effettiva in cui questa sia scaricata (*problema in corso di risoluzione*)
 ## Bazel Packages
 ### `app` package
 Modello MLP semplice, che con 100 epoche arriva al 10% di accuracy con un dataset sintetizzato.
