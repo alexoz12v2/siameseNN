@@ -1,7 +1,3 @@
-# load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
-load("@rules_python//python:py_binary.bzl", "py_binary")
-
-
 def _zip_extract_impl(ctx):
     # Ensure the output directory exists
     output_dir = ctx.actions.declare_directory(ctx.attr.output_dir)

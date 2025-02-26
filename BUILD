@@ -62,6 +62,7 @@ gazelle(
 # no. usare py_pex_binary
 pkg_zip(
     name = "app_zip",
+    visibility = ["//visibility:public"],
     srcs = [ 
         "//first_app:keras_test", 
         "//classification_from_scratch:classification_from_scratch",

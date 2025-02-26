@@ -21,5 +21,3 @@ http_file(
     name = "siamese_right",
     url = "https://drive.usercontent.google.com/download?id=1EzBZUb_mh_Dp_FKD0P4XiYYSd0QBH5zW&authuser=0&confirm=t&uuid=0a26a7b6-8d05-4d19-ba60-112b2db37dee&at=APvzH3qj0KXtwq86j3DM9fiWyb-7:1733746709914",
 )
-
-
