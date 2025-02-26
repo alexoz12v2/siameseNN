@@ -159,7 +159,8 @@ def main(argv: list[str]) -> None:
         )
         siamese_model = apputils.SiameseModel(target_shape)
         siamese_model.build(target_shape + (3,))
-        keras.utils.plot_model(siamese_model, show_shapes=True, to_file="siamese.png")
+        # rottissimo
+        # keras.utils.plot_model(siamese_model, show_shapes=True, to_file="siamese.png")
         siamese_model.compile(optimizer=keras.optimizers.Adam(1e-4))
         siamese_model.fit(
             dataset_train.take(20) if FLAGS["fast-train"].value else dataset_train,

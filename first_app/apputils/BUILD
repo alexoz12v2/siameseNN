@@ -16,7 +16,7 @@ py_library(
         requirement("numpy"),
     ] + select({
         "@bazel_tools//src/conditions:linux": [
-            requirement("tensorflow[and-cuda]") # testare se funziona
+            requirement("tensorflow"),
         ],
         "@bazel_tools//src/conditions:windows": [
             requirement("tensorflow-gpu"),

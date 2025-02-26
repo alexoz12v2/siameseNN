@@ -69,6 +69,11 @@ pkg_zip(
         #"//app:keras_test.venv", 
         #"//classification_from_scratch:classification_from_scratch.venv",
         #"//siamese_first:siamese_first.venv",
-    ],
+    ] + select({
+        "@bazel_tools//src/conditions:linux": [
+            ":start.sh"
+        ],
+        "//conditions:default": []
+    }),
     include_runfiles = True,
 )

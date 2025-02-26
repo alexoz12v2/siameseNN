@@ -19,7 +19,7 @@ py_library(
         requirement("pydot"),
     ] + select({
         "@bazel_tools//src/conditions:linux": [
-            requirement("tensorflow[and-cuda]") # testare se funziona
+            requirement("tensorflow"),
         ],
         "@bazel_tools//src/conditions:windows": [
             requirement("tensorflow-gpu"),

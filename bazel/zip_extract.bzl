@@ -25,11 +25,7 @@ Rename-Item -Path \\"{zip_file}.zip\\" -NewName \\"{old_name}\\""
         )
     else:
         # For Unix-like systems (Linux/macOS), use `unzip` command
-        unzip_command = """
-        rm -rf {output_dir} &&
-        mkdir -p {output_dir} &&
-        unzip {zip_file} -d {output_dir}
-        """.format(
+        unzip_command = """rm -rf {output_dir} && mkdir -p {output_dir} && unzip {zip_file} -d {output_dir}""".format(
             output_dir=output_dir.path,
             zip_file=ctx.file.zip_file.path,
         )

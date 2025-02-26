@@ -1,0 +1,2 @@
+test --test_output=errors --enable_runfiles
+common --enable_bzlmod --nolegacy_external_runfiles --enable_platform_specific_config

@@ -83,3 +83,8 @@ if platform.system() == "Windows" and is_running_from_bazel() is not None:
     sys.meta_path.insert(
         0, CUDAImportHook(Path(sys.argv[0]).parent.parent.parent.resolve())
     )
+#else:
+#    path = Path(sys.argv[0]).parent.parent.parent.resolve() # /home/alessio/.cache/bazel/_bazel_alessio/ec037b2a92d4035b87428840523bc6cc/execroot/
+#    sys.meta_path.insert(
+#        0, PyQtImportHook(path)
+#    )

@@ -16,22 +16,23 @@ def _win32_short_path_from(path: Path) -> Path:
 
 def _find_first_matching_path(parent_path: Path, name_pattern: str) -> Path:
     regex = re.compile(name_pattern)
-    for p in parent_path.iterdir():
-        print("- " + p.name)
     matching_paths = [p for p in parent_path.iterdir() if regex.match(p.name)]
     return matching_paths[0]
 
 
 def _find_all_matching_path(parent_path: Path, name_pattern: str) -> list[Path]:
     regex = re.compile(name_pattern)
-    for p in parent_path.iterdir():
-        print("- " + p.name)
     matching_paths = [p for p in parent_path.iterdir() if regex.match(p.name)]
     return matching_paths
 
 
 def _contains_dll_files(path: Path) -> bool:
     return any(file.suffix == ".dll" for file in path.iterdir() if file.is_file())
+
+
+def _contains_so_files(path: Path) -> bool:
+    so_pattern = re.compile(r"^.+\.so(\.\d+)*$")  # Matches .so and .so.1, .so.1.2, etc.
+    return any(so_pattern.match(file.name) for file in path.iterdir() if file.is_file())
 
 
 def _add_dll_path(path: Path) -> None:
@@ -58,20 +59,34 @@ def _process_directories(
     except Exception as e:
         print(f"Error: {base_path}", e)
 
+        
+def _add_shared_lib_path(path: Path) -> None:
+    if not path.is_dir():
+        raise ValueError(f"{str(path)} doesn't exist")
+    os.environ["LD_LIBRARY_PATH"] = f"{path}:{os.environ.get('LD_LIBRARY_PATH', '')}"
+    os.environ["PATH"] = str(path) + ":" + os.environ.get("PATH")
+    print(f"Added {path} to LD_LIBRARY_PATH")
+
 
 def add_dynamic_library_directories(
     base_path: Path, patterns: list[str], path_processor: Callable[[Path], Path]
 ) -> None:
     """To be run in bazel run before importing any pypi package which is composed by multiple modules having dynamic libraries"""
-    if platform.system() == "Windows":
-        base_path = base_path.resolve()
-        if not base_path.is_dir():
-            raise ValueError(f"Path {str(base_path)} is not a directory")
-        for pattern in patterns:
-            for p in _find_all_matching_path(base_path, pattern):
-                base = path_processor(p)
+    base_path = base_path.resolve()
+    if not base_path.is_dir():
+        raise ValueError(f"Path {str(base_path)} is not a directory")
+    for pattern in patterns:
+        for p in _find_all_matching_path(base_path, pattern):
+            base = path_processor(p)
+            if platform.system() == "Windows":
                 _process_directories(
                     base,
                     _contains_dll_files,
                     lambda p: _add_dll_path(_win32_short_path_from(p)),
+                )
+            else:
+                _process_directories(
+                    base,
+                    _contains_so_files,
+                    lambda p: _add_shared_lib_path(p),
                 )

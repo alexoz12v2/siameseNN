@@ -142,7 +142,8 @@ def main(argv: list[str]) -> None:
 
     # questa funzione salva il modello in {cwd}/model.png, che quindi puoi o aprire da qua o
     # aprire manualmente, vedi nel bazel sandbox attraverso il convenience symlink `bazel-bin`
-    keras.utils.plot_model(model, show_shapes=True)
+    # non funziona sempre
+    # keras.utils.plot_model(model, show_shapes=True)
     logging.info("you can open the `model.png` on directory %s", str(Path.cwd()))
 
     # training del modello

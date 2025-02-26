@@ -1,4 +1,7 @@
 # Progetto Rete Siamese
+## Passaggi Preliminari
+- Installazione software necessario e preparazione ambiente
+- rinominare `.bazelrc_linux` o `.bazelrc_windows` in `.bazelrc`
 ## Bazel Packages
 ### `app` package
 Modello MLP semplice, che con 100 epoche arriva al 10% di accuracy con un dataset sintetizzato.

@@ -6,4 +6,7 @@ if platform.system() == "Windows":
 
 base_file_path = pyqt_import_hook.base_file_path
 
-__all__.append(base_file_path)
+if platform.system() == "Windows":
+    __all__.append(base_file_path)
+else:
+    __all__ = [base_file_path]
