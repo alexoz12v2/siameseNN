@@ -38,6 +38,22 @@
                 "PYTHONPATH": "${env:PYTHONPATH}:${workspaceFolder}"
             },
             "args": ["--contrastive-loss", "--fast-train"]
+        },
+        {
+            "name": "Python Debugger: Siamese test",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "args": [
+                "--action=train",
+                "--working-directory=Y:\\machine-learning-data\\",
+                "--verbosity=2"
+            ]
         }
     ]
 }

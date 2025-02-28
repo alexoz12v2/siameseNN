@@ -1,6 +1,7 @@
+import utils
+
 import absl
 from absl import logging
-import utils
 import tensorflow as tf
 import keras
 import first_app.apputils as apputils  # tutte le path sono relative a WORKSPACE

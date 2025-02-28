@@ -1,8 +1,9 @@
+import utils
+
 from absl import logging
 from absl import app
 from pathlib import Path
 import numpy as np
-import utils
 from PyQt6.QtWidgets import QApplication, QWidget
 import tensorflow as tf
 import keras

@@ -1,10 +1,10 @@
-from pathlib import Path
+import utils
 
+from pathlib import Path
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pydot
-import utils
 import tensorflow as tf
 import keras
 import siamese_first.siamese_lib.layers as apputils

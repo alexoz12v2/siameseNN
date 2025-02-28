@@ -1,19 +1,29 @@
+import utils  # needs to be the first
+
+import sys
+import matplotlib
 from dataclasses import dataclass
-import utils
 import tensorflow as tf
 import keras
 from pathlib import Path
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, List, NamedTuple, Tuple, Union
 from enum import Enum
 from absl import logging, app, flags
 import textwrap
 from kaggle.api.kaggle_api_extended import KaggleApi
-from siamese_first.siamese_lib.layers import SiameseModel
+from siamese_first.siamese_lib.layers import (
+    SiameseModel,
+    visualize as siamese_visualize,
+)
+import matplotlib.pyplot as plt
 import os
 import json
 import getpass
 import random
+import inspect
+import shlex
 from PIL import Image
+import pprint
 
 
 @dataclass
@@ -158,6 +168,7 @@ class ImageBag:
 
             components = components[0]
             if is_valid_image(path):
+                self._all_images.append(path)
                 if components in self._class_to_image_dict:
                     self._class_to_image_dict[components].append(path)
                 else:
@@ -165,9 +176,7 @@ class ImageBag:
                 self._image_to_class_dict[path] = components
 
         if logging.get_verbosity() >= logging.DEBUG:
-            import pprint
-
-            logging.debug("Path Dict: %s", pprint.pprint(self._class_to_image_dict))
+            pprint.pprint(self._class_to_image_dict)
 
     def _split_data(self):
         """Split data into 80% train, 10% validation, 10% test."""
@@ -183,7 +192,7 @@ class ImageBag:
             images[val_split:],
         )
 
-    def _generate_triplets(self, images):
+    def _generate_triplets(self, images: list[Path]) -> list[Tuple[Path, Path, Path]]:
         """Generate triplets (anchor, positive, negative)."""
         triplets = []
 
@@ -224,9 +233,14 @@ class ImageBag:
         """Return TensorFlow datasets for training, validation, and testing."""
         train_images, val_images, test_images = self._split_data()
 
+        logging.info("Generating triplets list (this may take a while...)")
         train_triplets = self._generate_triplets(train_images)
         val_triplets = self._generate_triplets(val_images)
         test_triplets = self._generate_triplets(test_images)
+        logging.debug("Train Triplets: (%d)", len(train_triplets))
+        if logging.get_verbosity() >= logging.DEBUG:
+            for anchor, positive, negative in train_triplets:
+                logging.debug("a: %s | p: %s | n: %s", anchor, positive, negative)
 
         train_ds = (
             tf.data.Dataset.from_generator(
@@ -277,22 +291,107 @@ class ImageBag:
 
 class CommandProcessor:
     def __init__(self, command_not_found_callback: Callable[[list[str]], None]) -> None:
-        self._commands: dict[Tuple, Callable[[], None]] = {}
+        self._commands: dict[Tuple, Callable] = {}
+        self._commands_invalid_syntax: dict[Tuple, Callable] = {}
         self._command_not_found_callback = command_not_found_callback
 
-    def register_command(self, command: Tuple, func: Callable[[], None]) -> None:
+    def register_command(
+        self,
+        command: Tuple,
+        func: Callable,
+        signature: Tuple = (),
+        invalid_syntax_callback: Callable[[], None] = lambda: (),
+    ) -> None:
+        if not callable(func):
+            raise ValueError(f"Passed function {func} is not a callable")
+
+        if (
+            not callable(invalid_syntax_callback)
+            or len(inspect.signature(invalid_syntax_callback).parameters) != 0
+        ):
+            raise ValueError(
+                f"Passed invalid callback {invalid_syntax_callback} is not a zero param callable"
+            )
+
+        func_sig = inspect.signature(func)
+        if len(func_sig.parameters) != len(signature):
+            raise ValueError(
+                f"Different number of parameters found between the given callback and the passed signature: {len(func_sig.parameters)} vs {len(signature)}"
+            )
+
+        for param_type in signature:
+            if param_type not in (str, int, float):
+                raise ValueError(
+                    "Commands can only accept positional arguments of type str, int, or float."
+                )
+
         self._commands[command] = func
+        self._commands_invalid_syntax[command] = invalid_syntax_callback
 
     @property
     def available_commands(self) -> list[Tuple]:
         return getattr(self, "_commands", {}).keys()
 
-    def __call__(self, command: str) -> None:
-        funcList = [v for k, v in self._commands.items() if command in k]
-        if len(funcList) == 0:
+    def _convert_arguments(
+        self, given_args: List[str], expected_types: List[Union[type, None]]
+    ) -> List[Union[str, int, float]]:
+        converted_args = []
+        for arg, expected_type in zip(given_args, expected_types):
+            if expected_type is int:
+                try:
+                    converted_args.append(int(arg))
+                except ValueError:
+                    return []
+            elif expected_type is float:
+                try:
+                    converted_args.append(float(arg))
+                except ValueError:
+                    return []
+            else:
+                converted_args.append(arg)
+        return converted_args
+
+    def _check_signature_validity_and_call(
+        self,
+        given_signature: List[str],
+        inspected_signature: inspect.Signature,
+        func: Callable,
+    ):
+        expected_types = [
+            param.annotation if param.annotation in (str, int, float) else str
+            for param in inspected_signature.parameters.values()
+        ]
+        converted_args = self._convert_arguments(given_signature, expected_types)
+        if len(converted_args) != len(given_signature):
+            return False
+
+        try:
+            bound_args = inspected_signature.bind(*converted_args)
+            bound_args.apply_defaults()
+            func(*bound_args.args)
+            return True
+        except TypeError as e:
+            logging.debug(f"Argument mismatch: {e}")
+            return False
+
+    def __call__(self, command_line: str) -> None:
+        parts = shlex.split(command_line.strip())
+        if not parts:
+            return
+
+        command, *args = parts
+        func_list = [v for k, v in self._commands.items() if command in k]
+        invalid_cb_list = [
+            v for k, v in self._commands_invalid_syntax.items() if command in k
+        ]
+        if len(func_list) == 0:
             self._command_not_found_callback(self._commands.keys())
         else:
-            funcList[0]()
+            func = func_list[0]
+            invalid_cb = invalid_cb_list[0]
+            func_sig = inspect.signature(func)
+            if not self._check_signature_validity_and_call(args, func_sig, func):
+                invalid_cb()
 
 
 def binary_prompt(prompt: str = "Use existing? (Y/N): ") -> bool:
@@ -307,6 +406,10 @@ def binary_prompt(prompt: str = "Use existing? (Y/N): ") -> bool:
 
 # bazel run //siamese_second  -- --action=train --working-directory="Y:\machine-learning-data\"
 def main(args: list[str]) -> None:
+    # assicurati che Abseil default logger stia usando stdout
+    logging.get_absl_handler().stream = sys.stdout
+
+    matplotlib.use("QtAgg")
     logging.info("Hello World! %s", args)
     logging.info(
         "CUDA Capable devices detected by tensorflow: %s",
@@ -359,27 +462,72 @@ def main(args: list[str]) -> None:
             train_dataset, val_dataset, test_dataset = image_bag.get_datasets()
             if binary_prompt("Save Datasets to disk? (Y/N) "):
                 logging.info("Saving Train dataset to %s", dataset_paths[0])
+                dataset_paths[0].mkdir(parents=True, exist_ok=True)
                 tf.data.Dataset.save(train_dataset, dataset_paths[0])
                 logging.info("Saving Train dataset to %s", dataset_paths[1])
+                dataset_paths[1].mkdir(parents=True, exist_ok=True)
                 tf.data.Dataset.save(val_dataset, dataset_paths[1])
                 logging.info("Saving Train dataset to %s", dataset_paths[2])
+                dataset_paths[2].mkdir(parents=True, exist_ok=True)
                 tf.data.Dataset.save(test_dataset, dataset_paths[2])
         else:
             train_dataset, val_dataset, test_dataset = [
                 tf.data.Dataset.load(p) for p in dataset_paths
             ]
 
+        if binary_prompt("Want to display Datasets number of batches? (Y/N): "):
+            print(f"Train: {train_dataset.reduce(0, lambda x, _: x + 1).numpy()}")
+            print(f"Val:   {val_dataset.reduce(0, lambda x, _: x + 1).numpy()}")
+            print(f"Test:  {test_dataset.reduce(0, lambda x, _: x + 1).numpy()}")
+
         logging.info("Building siamese model for target size %s", target_size)
         siamese_network = SiameseModel(target_size)
         siamese_network.build(target_size + (3,))
 
-        def on_train() -> None:
-            logging.debug("on_train")
-            pass
+        def on_train_invalid() -> None:
+            logging.debug("on_train_invalid")
+            print("Syntax: train <epochs: int>")
 
-        def on_visualize() -> None:
-            logging.debug("on_visualize")
-            pass
+        trained = False  # TODO cerca dati
+
+        def on_train(epochs: int) -> None:
+            logging.debug("on_train %d", epochs)
+            nonlocal siamese_network, train_dataset, val_dataset, test_dataset, trained
+            if trained and not binary_prompt("Already Fit. Train Again? (Y/N): "):
+                return
+
+        def on_visualize_invalid() -> None:
+            logging.debug("on_visualize_invalid")
+            print(
+                'Syntax: visualize <dataset_name: "train"|"val"|"test"> <batch_index: int>'
+            )
+
+        def on_visualize(dataset_name: str, batch_index: int) -> None:
+            logging.debug('on_visualize "%s" %d', dataset_name, batch_index)
+            nonlocal train_dataset, val_dataset, test_dataset
+
+            def visualize(dataset: tf.data.Dataset, batch: int) -> None:
+                dataset_size = dataset.reduce(0, lambda x, _: x + 1).numpy()
+
+                if batch >= dataset_size:
+                    logging.info(
+                        "dataset only has %d batches, requested %d", dataset_size, batch
+                    )
+                else:
+                    siamese_visualize(
+                        *next(dataset.skip(batch).take(1).as_numpy_iterator())
+                    )
+
+            match dataset_name:
+                case "train":
+                    visualize(train_dataset, batch_index)
+                case "val":
+                    visualize(val_dataset, batch_index)
+                case "test":
+                    visualize(test_dataset, batch_index)
+                case _:
+                    logging.warn('Unrecognized dataset %s, using "train"', dataset_name)
+                    visualize(train_dataset, batch_index)
 
         should_quit = False
 
@@ -391,12 +539,17 @@ def main(args: list[str]) -> None:
         command_processor = CommandProcessor(
             lambda valid_commands: print(f"Invalid command. Commands: {valid_commands}")
         )
-        command_processor.register_command(("train", "t"), on_train)
-        command_processor.register_command(("visualize", "v"), on_visualize)
+        command_processor.register_command(
+            ("train", "t"), on_train, (int,), on_train_invalid
+        )
+        command_processor.register_command(
+            ("visualize", "v"), on_visualize, (str, int), on_visualize_invalid
+        )
         command_processor.register_command(("quit", "exit", "q"), on_quit)
 
         print(f"{command_processor.available_commands}")
         while not should_quit:
+            # input non supporta history di comandi. serve `readline` (linux) o `pyreadline` (windows)
             command_processor(input("insert a command: "))
 
 
