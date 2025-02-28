@@ -24,10 +24,13 @@
     },
     "terminal.integrated.defaultProfile.windows": "DevPS164",
     "python.analysis.languageServerMode": "default",
-    "python.autoComplete.extraPaths": ["/home/alessio/programming/siameseNN"],
+    "python.autoComplete.extraPaths": ["${workspaceFolder}"],
     "python.analysis.exclude": [
         "**/bazel-bin", 
         "**/bazel-out", 
         "**/bazel-siameseNN", 
-    ]
+    ],
+    "bazel.lsp.command": "bazel-lsp" // https://github.com/cameron-martin/bazel-lsp/releases/
 }
+
+// https://marketplace.visualstudio.com/items?itemName=BazelBuild.vscode-bazel

@@ -164,16 +164,17 @@ def triplet_embedding_model(target_shape: Tuple[int, int]) -> keras.Model:
     # input shape ResNet50 mi da a disposizione il tensore simbolico in output
     envvar = os.getenv("KERAS_HOME")
     logstrs = {
-        "where": "KERAS_HOME" if envvar is not None else "${Home}/.keras",
+        "where": "KERAS_HOME" if envvar is not None else str(Path.home() / ".keras"),
         "value": f" = {envvar}" if envvar is not None else "",
     }
     logging.info(
         "About to download ResNet50 ImageNet's weights to %s",
         logstrs["where"] + logstrs["value"],
     )
-    base_cnn = keras.applications.resnet.ResNet50(
+    base_cnn = tf.keras.applications.resnet.ResNet50(
         weights="imagenet", input_shape=target_shape + (3,), include_top=False
     )
+    logging.info("Downloaded/Found ResNet50")
 
     flatten = keras.layers.Flatten()(base_cnn.output)
     dense1 = keras.layers.Dense(units=512, activation="relu")(flatten)

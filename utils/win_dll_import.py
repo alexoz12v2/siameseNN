@@ -59,7 +59,7 @@ def _process_directories(
     except Exception as e:
         print(f"Error: {base_path}", e)
 
-        
+
 def _add_shared_lib_path(path: Path) -> None:
     if not path.is_dir():
         raise ValueError(f"{str(path)} doesn't exist")

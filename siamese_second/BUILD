@@ -27,12 +27,14 @@ py_binary(
     visibility = [ "//visibility:public" ],
     deps = [
         "//utils",
+        "//siamese_first/siamese_lib",
         requirement("absl_py"),
         requirement("keras"),
         requirement("matplotlib"),
         requirement("numpy"),
         requirement("pillow"),
         requirement("pyqt6"),
+        requirement("kaggle"),
     ] + select({
         "@bazel_tools//src/conditions:linux": [
             requirement("tensorflow"),

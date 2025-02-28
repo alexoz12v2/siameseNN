@@ -8,6 +8,7 @@ dependencies = [
     "pyqt6",
     "pydot",
     "matplotlib",
+    "kaggle",
 
     "keras; platform_system == 'Linux'",
     "tensorflow[and-cuda]==2.17.1  ; platform_system == 'Linux'",
