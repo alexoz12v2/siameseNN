@@ -47,13 +47,15 @@
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}/",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}"
+                "PYTHONPATH": "${workspaceFolder}",
+                "DEVENV_NVIDIA_PATH": "${workspaceFolder}\\.venv\\Lib\\site-packages\\nvidia"
             },
             "args": [
                 "--action=train",
                 "--working-directory=Y:\\machine-learning-data\\",
                 "--verbosity=2"
-            ]
+            ],
+            "justMyCode": false
         }
     ]
 }

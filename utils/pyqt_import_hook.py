@@ -43,9 +43,14 @@ class CUDAImportHook(MetaPathFinder, Loader):
 
     def add_dll_directories(self):
         print(f"[CUDA] Adding DLL directories... from base path {self.base_path}")
-        win_dll_import.add_dynamic_library_directories(
-            self.base_path, [".*nvidia.*"], lambda p: p
-        )
+        if os.environ.get("DEVENV_NVIDIA_PATH") is not None:
+            win_dll_import.add_dynamic_library_directories(
+                self.base_path, [".*"], lambda p: p
+            )
+        else:
+            win_dll_import.add_dynamic_library_directories(
+                self.base_path, [".*nvidia.*"], lambda p: p
+            )
 
 
 def is_running_from_bazel() -> bool:
@@ -76,13 +81,18 @@ def base_file_path() -> Path:
 
 
 # Register the import hook
-if platform.system() == "Windows" and is_running_from_bazel() is not None:
+if platform.system() == "Windows" and is_running_from_bazel():
     sys.meta_path.insert(
         0, PyQtImportHook(Path(sys.argv[0]).parent.parent.parent.resolve())
     )
     sys.meta_path.insert(
         0, CUDAImportHook(Path(sys.argv[0]).parent.parent.parent.resolve())
     )
+elif platform.system() == "Windows" and os.environ.get("DEVENV_NVIDIA_PATH") is not None:
+    path = Path(os.environ.get("DEVENV_NVIDIA_PATH"))
+    if path.exists() and path.is_dir():
+        path = path.resolve()
+        sys.meta_path.insert(0, CUDAImportHook(path))
 # else:
 #    path = Path(sys.argv[0]).parent.parent.parent.resolve() # /home/alessio/.cache/bazel/_bazel_alessio/ec037b2a92d4035b87428840523bc6cc/execroot/
 #    sys.meta_path.insert(

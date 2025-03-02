@@ -198,6 +198,7 @@ def triplet_embedding_model(target_shape: Tuple[int, int]) -> keras.Model:
 # definizione della rete di distanza: A partire da una tripletta di embeddings
 # prodotti dal triplet_embedding_model, calcola distanza euclidea tra
 # anchor-positive, anchor-negative
+# Guida per il salvataggio: https://keras.io/guides/serialization_and_saving/#custom-objects
 class DistanceLayer(keras.layers.Layer):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -208,6 +209,16 @@ class DistanceLayer(keras.layers.Layer):
         ap_distance = tf.math.reduce_sum(tf.square(anchor - positive), axis=None)
         an_distance = tf.math.reduce_sum(tf.square(anchor - negative), axis=None)
         return (ap_distance, an_distance)
+
+    def get_config(self) -> dict:
+        """Return the configuration of the layer for serialization."""
+        config = super().get_config()
+        return config
+
+    @classmethod
+    def from_config(cls, config: dict) -> "DistanceLayer":
+        """Create a layer instance from a config dictionary."""
+        return cls(**config)
 
 
 def triplet_siamese_model(target_shape: Tuple[int, int]) -> keras.Model:
@@ -236,8 +247,6 @@ def triplet_siamese_model(target_shape: Tuple[int, int]) -> keras.Model:
 # e quindi training step con loss, metric e optimizer
 # applicazione del Trainer Pattern
 class SiameseModel(keras.Model):
-    _TupleType = Union[Tuple[tf.Tensor, tf.Tensor, tf.Tensor], list[tf.Tensor]]
-
     # L(A, P, N) = max(|f(A) - f(P)|^2 - |f(A)-f(N)|^2 + margin, 0)
     # ne calcolo la media di questo valore con keras.metrics.Mean
     def __init__(self, target_shape, margin=0.5):
@@ -245,8 +254,10 @@ class SiameseModel(keras.Model):
         self.siamese_network, self.embedding = triplet_siamese_model(target_shape)
         self.margin = margin
         self.loss_tracker = keras.metrics.Mean(name="loss")
+        self.target_shape = target_shape
+        self.build(input_shape=[(None, *target_shape, 3)] * 3) 
 
-    def call(self, inputs: _TupleType) -> Tuple[tf.Tensor, tf.Tensor]:
+    def call(self, inputs: Union[Tuple[tf.Tensor, tf.Tensor, tf.Tensor], list[tf.Tensor]]) -> Tuple[tf.Tensor, tf.Tensor]:
         # If inputs is already a tuple/list of 3 tensors, pass it directly
         if isinstance(inputs, (tuple, list)) and len(inputs) == 3:
             return self.siamese_network(inputs)
@@ -279,7 +290,7 @@ class SiameseModel(keras.Model):
             f"Invalid input type: Expected tuple, list, or tensor, but got {type(inputs)}"
         )
 
-    def train_step(self, data: _TupleType) -> dict[str, float]:
+    def train_step(self, data: Union[Tuple[tf.Tensor, tf.Tensor, tf.Tensor], list[tf.Tensor]]) -> dict[str, float]:
         # train_step e' una funzione chiamata durante il model.fit(), nel quale
         # io ho disponibili nel self tutti i key params passati al model.compile()
         # come l'optimizer. Qui posso usare un gradient tape per memorizzare
@@ -304,7 +315,7 @@ class SiameseModel(keras.Model):
         # https://keras.io/examples/keras_recipes/trainer_pattern/
         return {"loss": self.loss_tracker.result()}
 
-    def test_step(self, data: _TupleType) -> dict[str, float]:
+    def test_step(self, data: Union[Tuple[tf.Tensor, tf.Tensor, tf.Tensor], list[tf.Tensor]]) -> dict[str, float]:
         loss = self._compute_triplet_loss(data)
 
         # metrica, in model.predict() usata come metrica di performance
@@ -312,12 +323,32 @@ class SiameseModel(keras.Model):
         return {"loss": self.loss_tracker.result()}
 
     # mi aspetto un tensore con shape (batch, w, h, c)
-    def _compute_triplet_loss(self, data: _TupleType) -> Union[float, tf.Tensor]:
+    def _compute_triplet_loss(self, data: Union[Tuple[tf.Tensor, tf.Tensor, tf.Tensor], list[tf.Tensor]]) -> Union[float, tf.Tensor]:
         ap_distance, an_distance = self.siamese_network(data)
 
         # applico formula
         loss = tf.maximum(ap_distance - an_distance + self.margin, 0.0)
         return loss
+
+    def get_config(self) -> dict:
+        """Returns the config dictionary for serialization."""
+        config = super().get_config()
+        config.update(
+            {
+                "target_shape": self.target_shape,
+                "margin": self.margin,
+            }
+        )
+        return config
+
+    @classmethod
+    def from_config(cls, config: dict) -> "SiameseModel":
+        """Creates a SiameseModel instance from a config dictionary."""
+        return cls(**config)
+
+    @classmethod
+    def load(model_path: Path) -> "SiameseModel":
+        return tf.keras.models.load_model(model_path, custom_objects={"DistanceLayer": DistanceLayer, "SiameseModel": SiameseModel})
 
     @property
     def metrics(self) -> list[keras.metrics.Metric]:
