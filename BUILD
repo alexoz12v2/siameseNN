@@ -86,6 +86,9 @@ pkg_zip(
         "@bazel_tools//src/conditions:linux": [
             ":start.sh"
         ],
+        "@bazel_tools//src/conditions:windows": [
+            ":start.ps1"
+        ],
         "//conditions:default": []
     }),
     include_runfiles = True,

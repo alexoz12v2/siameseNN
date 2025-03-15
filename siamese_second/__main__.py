@@ -1,4 +1,3 @@
-import numpy as np
 import utils  # needs to be the first
 
 import sys
@@ -13,6 +12,7 @@ from absl import logging, app, flags
 import textwrap
 from kaggle.api.kaggle_api_extended import KaggleApi
 from siamese_first.siamese_lib.layers import (
+    DistanceLayer,
     SiameseModel,
     visualize as siamese_visualize,
 )
@@ -25,6 +25,8 @@ import inspect
 import shlex
 from PIL import Image
 import pprint
+from tkinter import filedialog, Tk
+import numpy as np
 
 
 @dataclass
@@ -137,12 +139,24 @@ def authenticate_kaggle() -> KaggleApi:
 
 def is_valid_image(file_path: Path) -> bool:
     """Check if a file is a valid image using Pillow."""
+    if file_path is None or not file_path.is_file():
+        return False
     try:
         with Image.open(file_path) as img:
             img.verify()  # Verify if the image is not corrupted
         return True
     except Exception:
         return False
+
+
+def preprocess_image(file_path: tf.Tensor, target_size) -> tf.Tensor:
+    if isinstance(file_path, str) or isinstance(file_path, Path):
+        file_path = tf.convert_to_tensor(str(file_path), dtype=tf.string)
+    img = tf.io.read_file(file_path)
+    img = tf.io.decode_jpeg(img, channels=3)  # Decode directly as RGB
+    img = tf.image.convert_image_dtype(img, tf.float32)
+    img = tf.image.resize(img, target_size)  # Resize lazily
+    return img
 
 
 class ImageBag:
@@ -208,13 +222,6 @@ class ImageBag:
     ]:
         """Load datasets using image_dataset_from_directory and prepare triplets."""
 
-        def preprocess_image(file_path: tf.Tensor) -> tf.Tensor:
-            img = tf.io.read_file(file_path)
-            img = tf.io.decode_jpeg(img, channels=3)  # Decode directly as RGB
-            img = tf.image.convert_image_dtype(img, tf.float32)
-            img = tf.image.resize(img, self._target_size)  # Resize lazily
-            return img
-
         # Store file paths, not images
         image_path_ds_dict: dict[str, tf.data.Dataset] = {
             path.name: tf.data.Dataset.list_files(
@@ -248,11 +255,11 @@ class ImageBag:
             # eager evaluation
             triplet_ds = tf.data.Dataset.zip((anchors_ds, positive_ds, negative_ds))
             triplet_ds = triplet_ds.map(
-                lambda a, p, n: (
-                    preprocess_image(a),
-                    preprocess_image(p),
-                    preprocess_image(n),
-                )
+                lambda a, p, n: [
+                    preprocess_image(a, self._target_size),
+                    preprocess_image(p, self._target_size),
+                    preprocess_image(n, self._target_size),
+                ]
             )
 
             datasets.append(triplet_ds)
@@ -445,6 +452,19 @@ def load_dict_from_json(filepath: str | Path) -> dict[str, Any]:
         return json.load(f)
 
 
+def ask_filenames(prompts: list[str]):
+    root = Tk()
+    directories = []
+    for i in range(len(prompts)):
+        dir_path = ""
+        while not is_valid_image(Path(dir_path)):
+            dir_path = filedialog.askopenfilename(title=prompts[i])
+        directories.append(Path(dir_path))
+    root.withdraw()
+
+    return directories
+
+
 # bazel run //siamese_second  -- --action=train --working-directory="Y:\machine-learning-data\"
 def main(args: list[str]) -> None:
     # assicurati che Abseil default logger stia usando stdout
@@ -509,12 +529,15 @@ def main(args: list[str]) -> None:
                 logging.info("Saving Train dataset to %s", dataset_paths[0])
                 dataset_paths[0].mkdir(parents=True, exist_ok=True)
                 tf.data.Dataset.save(train_dataset, str(dataset_paths[0]))
+
                 logging.info("Saving Train dataset to %s", dataset_paths[1])
                 dataset_paths[1].mkdir(parents=True, exist_ok=True)
                 tf.data.Dataset.save(val_dataset, str(dataset_paths[1]))
+
                 logging.info("Saving Train dataset to %s", str(dataset_paths[2]))
                 dataset_paths[2].mkdir(parents=True, exist_ok=True)
                 tf.data.Dataset.save(test_dataset, str(dataset_paths[2]))
+
                 logging.info("Saving dataset cardinalities to %s", dataset_paths[3])
                 dataset_paths[3].mkdir(parents=True, exist_ok=True)
                 save_dict_to_json(
@@ -540,8 +563,27 @@ def main(args: list[str]) -> None:
 
         learning_rate = 1e-4
         logging.info("Building siamese model for target size %s", target_size)
-        siamese_network = SiameseModel(target_size)
-        # siamese_network.build(target_size + (3,))
+
+        model_path = conf.data_path / "siamese_second_model_saves"
+        siamese_network = None
+        trained = False
+        if binary_prompt("Load Model?(Y/N): "):
+            trained = True
+            siamese_network_loaded = tf.keras.models.load_model(
+                model_path,
+                custom_objects={
+                    "DistanceLayer": DistanceLayer,
+                    "SiameseModel": SiameseModel,
+                    "Mean": keras.metrics.Mean,  # Explicitly add Mean metric
+                    "maximum": tf.maximum,  # If TensorFlow operations need registering
+                },
+            )
+            siamese_network = SiameseModel(target_size)
+            siamese_network.set_weights(siamese_network_loaded.get_weights())
+        else:
+            siamese_network = SiameseModel(target_size)
+            # siamese_network.build(target_size + (3,))
+
         dummy_input = [tf.zeros((1, *target_size, 3))] * 3  # Batch size = 1
         siamese_network(dummy_input)  # Calls forward pass to define input shape
         logging.info(
@@ -554,12 +596,10 @@ def main(args: list[str]) -> None:
             logging.debug("on_train_invalid")
             print("Syntax: train <epochs: int>")
 
-        trained = False  # TODO cerca dati
-
         def on_train(epochs: int) -> None:
             # TODO add save callback
             logging.debug("on_train %d", epochs)
-            nonlocal siamese_network, trained, conf
+            nonlocal siamese_network, trained, conf, model_path
             nonlocal train_dataset, val_dataset, test_dataset
 
             if trained and not binary_prompt("Already Fit. Train Again? (Y/N): "):
@@ -567,18 +607,21 @@ def main(args: list[str]) -> None:
 
             callbacks = []
 
-            model_path = conf.data_path / "siamese_second_model_saves"
             if not model_path.exists():
                 model_path.mkdir(parents=True)
             elif not model_path.is_dir():
                 raise ValueError(f'Model Path "{str(model_path)}" is not a directory')
 
-            callbacks.extend([
-                tf.keras.callbacks.ModelCheckpoint(filepath=str(model_path), save_weights_only=False, verbose=1)
-                # SaveModelCallback(siamese_network, model_path, "model_{epoch}.tf"),
-                # tf.keras.callbacks.ProgbarLogger(),
-                # tf.keras.callbacks.History(),
-            ])
+            callbacks.extend(
+                [
+                    tf.keras.callbacks.ModelCheckpoint(
+                        filepath=str(model_path), save_weights_only=False, verbose=1
+                    )
+                    # SaveModelCallback(siamese_network, model_path, "model_{epoch}.tf"),
+                    # tf.keras.callbacks.ProgbarLogger(),
+                    # tf.keras.callbacks.History(),
+                ]
+            )
             siamese_network.fit(
                 train_dataset,
                 epochs=epochs,
@@ -631,6 +674,64 @@ def main(args: list[str]) -> None:
             nonlocal should_quit
             should_quit = True
 
+        def on_inference() -> None:
+            logging.debug("on_inference")
+            nonlocal siamese_network, target_size
+            image_paths = ask_filenames(["anchor", "positive", "negative"])
+            if logging.get_verbosity() >= logging.INFO:
+                for num, path in enumerate(image_paths):
+                    logging.info("image path %d: %s", num, str(path))
+
+            anchor = tf.expand_dims(
+                preprocess_image(image_paths[0], target_size), axis=0
+            )
+            positive = tf.expand_dims(
+                preprocess_image(image_paths[1], target_size), axis=0
+            )
+            negative = tf.expand_dims(
+                preprocess_image(image_paths[2], target_size), axis=0
+            )
+
+            ap_distance, an_distance = siamese_network([anchor, positive, negative])
+            anchor_embedding, positive_embedding, negative_embedding = (
+                siamese_network.embedding(anchor),
+                siamese_network.embedding(positive),
+                siamese_network.embedding(negative),
+            )
+            logging.info(
+                "AP Distance: %f, AN Distance: %f",
+                ap_distance.numpy(),
+                an_distance.numpy(),
+            )
+
+            cosine_similarity = tf.keras.metrics.CosineSimilarity()
+            positive_similarity = cosine_similarity(
+                anchor_embedding, positive_embedding
+            )
+            negative_similarity = cosine_similarity(
+                anchor_embedding, negative_embedding
+            )
+            logging.info(
+                "Positive Similarity: %f, Negative Similarity: %f",
+                positive_similarity.numpy(),
+                negative_similarity.numpy(),
+            )
+
+        def on_test_invalid() -> None:
+            logging.debug("on_test_invalid")
+            print("Syntax: test")
+
+        def on_test() -> None:
+            logging.debug("on_test")
+            nonlocal siamese_network, target_size
+            nonlocal test_dataset
+            # Evaluate the model on the test dataset
+            results = siamese_network.evaluate(test_dataset)
+
+            # Log and print results
+            logging.info("Test Loss: %f", results)
+            print(f"Test Results: Loss = {results}")
+
         command_processor = CommandProcessor(
             lambda valid_commands: print(f"Invalid command. Commands: {valid_commands}")
         )
@@ -641,6 +742,8 @@ def main(args: list[str]) -> None:
             ("visualize", "v"), on_visualize, (str, int), on_visualize_invalid
         )
         command_processor.register_command(("quit", "exit", "q"), on_quit)
+        command_processor.register_command(("inference", "i"), on_inference)
+        command_processor.register_command(("test", "te"), on_test, (), on_test_invalid)
 
         print(f"Available Commands: {command_processor.available_commands}")
         while not should_quit:

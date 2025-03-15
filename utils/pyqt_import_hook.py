@@ -88,7 +88,9 @@ if platform.system() == "Windows" and is_running_from_bazel():
     sys.meta_path.insert(
         0, CUDAImportHook(Path(sys.argv[0]).parent.parent.parent.resolve())
     )
-elif platform.system() == "Windows" and os.environ.get("DEVENV_NVIDIA_PATH") is not None:
+elif (
+    platform.system() == "Windows" and os.environ.get("DEVENV_NVIDIA_PATH") is not None
+):
     path = Path(os.environ.get("DEVENV_NVIDIA_PATH"))
     if path.exists() and path.is_dir():
         path = path.resolve()

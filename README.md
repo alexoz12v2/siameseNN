@@ -274,3 +274,8 @@ Dovrebbe invece contenere anche tutte le cartelle il cui nome incomincia per `ru
 Due possibili soluzioni
 1. Modificare il `.bazelrc` per utilizzare i python zips`--build_python_zip=true`, i quali rallentano lo sviluppo
 2. Aggiustare manualmente la struttura delle directories nel `app_zip.zip`, dopo averne estratto il contenuto
+
+Comando di esempio:
+```powershell
+PS > .\start.ps1 siamese_second -ArgumentList "--working-directory=$(Split-Path (Get-Location) -Parent)","--action=train"
+```

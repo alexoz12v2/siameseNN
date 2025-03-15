@@ -255,9 +255,11 @@ class SiameseModel(keras.Model):
         self.margin = margin
         self.loss_tracker = keras.metrics.Mean(name="loss")
         self.target_shape = target_shape
-        self.build(input_shape=[(None, *target_shape, 3)] * 3) 
+        self.build(input_shape=[(None, *target_shape, 3)] * 3)
 
-    def call(self, inputs: Union[Tuple[tf.Tensor, tf.Tensor, tf.Tensor], list[tf.Tensor]]) -> Tuple[tf.Tensor, tf.Tensor]:
+    def call(
+        self, inputs: Union[Tuple[tf.Tensor, tf.Tensor, tf.Tensor], list[tf.Tensor]]
+    ) -> Tuple[tf.Tensor, tf.Tensor]:
         # If inputs is already a tuple/list of 3 tensors, pass it directly
         if isinstance(inputs, (tuple, list)) and len(inputs) == 3:
             return self.siamese_network(inputs)
@@ -290,7 +292,10 @@ class SiameseModel(keras.Model):
             f"Invalid input type: Expected tuple, list, or tensor, but got {type(inputs)}"
         )
 
-    def train_step(self, data: Union[Tuple[tf.Tensor, tf.Tensor, tf.Tensor], list[tf.Tensor]]) -> dict[str, float]:
+    @tf.function
+    def train_step(
+        self, data: Union[Tuple[tf.Tensor, tf.Tensor, tf.Tensor], list[tf.Tensor]]
+    ) -> dict[str, float]:
         # train_step e' una funzione chiamata durante il model.fit(), nel quale
         # io ho disponibili nel self tutti i key params passati al model.compile()
         # come l'optimizer. Qui posso usare un gradient tape per memorizzare
@@ -315,7 +320,10 @@ class SiameseModel(keras.Model):
         # https://keras.io/examples/keras_recipes/trainer_pattern/
         return {"loss": self.loss_tracker.result()}
 
-    def test_step(self, data: Union[Tuple[tf.Tensor, tf.Tensor, tf.Tensor], list[tf.Tensor]]) -> dict[str, float]:
+    @tf.function
+    def test_step(
+        self, data: Union[Tuple[tf.Tensor, tf.Tensor, tf.Tensor], list[tf.Tensor]]
+    ) -> dict[str, float]:
         loss = self._compute_triplet_loss(data)
 
         # metrica, in model.predict() usata come metrica di performance
@@ -323,7 +331,9 @@ class SiameseModel(keras.Model):
         return {"loss": self.loss_tracker.result()}
 
     # mi aspetto un tensore con shape (batch, w, h, c)
-    def _compute_triplet_loss(self, data: Union[Tuple[tf.Tensor, tf.Tensor, tf.Tensor], list[tf.Tensor]]) -> Union[float, tf.Tensor]:
+    def _compute_triplet_loss(
+        self, data: Union[Tuple[tf.Tensor, tf.Tensor, tf.Tensor], list[tf.Tensor]]
+    ) -> Union[float, tf.Tensor]:
         ap_distance, an_distance = self.siamese_network(data)
 
         # applico formula
@@ -348,7 +358,13 @@ class SiameseModel(keras.Model):
 
     @classmethod
     def load(model_path: Path) -> "SiameseModel":
-        return tf.keras.models.load_model(model_path, custom_objects={"DistanceLayer": DistanceLayer, "SiameseModel": SiameseModel})
+        return tf.keras.models.load_model(
+            model_path,
+            custom_objects={
+                "DistanceLayer": DistanceLayer,
+                "SiameseModel": SiameseModel,
+            },
+        )
 
     @property
     def metrics(self) -> list[keras.metrics.Metric]:
