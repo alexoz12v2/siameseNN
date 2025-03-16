@@ -25,8 +25,8 @@ import inspect
 import shlex
 from PIL import Image
 import pprint
-from tkinter import filedialog, Tk
 import numpy as np
+import platform
 
 
 @dataclass
@@ -453,14 +453,41 @@ def load_dict_from_json(filepath: str | Path) -> dict[str, Any]:
 
 
 def ask_filenames(prompts: list[str]):
-    root = Tk()
     directories = []
-    for i in range(len(prompts)):
-        dir_path = ""
-        while not is_valid_image(Path(dir_path)):
-            dir_path = filedialog.askopenfilename(title=prompts[i])
-        directories.append(Path(dir_path))
-    root.withdraw()
+    if platform.system() != "Linux":
+        from tkinter import filedialog, Tk
+
+        root = Tk()
+        for i in range(len(prompts)):
+            dir_path = ""
+            while not is_valid_image(Path(dir_path)):
+                dir_path = filedialog.askopenfilename(title=prompts[i])
+            directories.append(Path(dir_path))
+        root.withdraw()
+    else:  # PyQt6 alternative for Linux
+        from PyQt6.QtWidgets import QApplication, QFileDialog
+        from PyQt6.QtCore import QTimer
+
+        app = QApplication([])
+
+        for prompt in prompts:
+            dir_path = ""
+            if prompt == prompts[-1]:
+                logging.debug("setQuitOnLastWindowClosed")
+                app.setQuitOnLastWindowClosed(True)
+
+            while not is_valid_image(Path(dir_path)):
+                dir_path, _ = QFileDialog.getOpenFileName(
+                    None, prompt, "", "Images (*.png *.jpg *.jpeg *.bmp *.gif)"
+                )
+
+            if dir_path:
+                directories.append(Path(dir_path))
+
+        # run a.quit after 100ms
+        QTimer.singleShot(100, app.quit)
+        # run mainloop
+        app.exec()
 
     return directories
 
@@ -546,14 +573,14 @@ def main(args: list[str]) -> None:
                         "val": val_numbatches,
                         "test": test_numbatches,
                     },
-                    dataset_paths[3],
+                    dataset_paths[3] / "cardinalities.json",
                 )
         else:
             train_dataset, val_dataset, test_dataset = [
-                tf.data.Dataset.load(p) for p in dataset_paths
+                tf.data.Dataset.load(str(p)) for p in dataset_paths[:-1]
             ]
             train_numbatches, val_numbatches, test_numbatches = load_dict_from_json(
-                dataset_paths[3]
+                dataset_paths[3] / "cardinalities.json"
             ).values()
 
         if binary_prompt("Want to display Datasets number of batches? (Y/N): "):
@@ -612,10 +639,18 @@ def main(args: list[str]) -> None:
             elif not model_path.is_dir():
                 raise ValueError(f'Model Path "{str(model_path)}" is not a directory')
 
+            model_checkpoint_path = (
+                str(model_path)
+                if platform.system() == "Windows"
+                else str(model_path / "model.keras")
+            )
+
             callbacks.extend(
                 [
                     tf.keras.callbacks.ModelCheckpoint(
-                        filepath=str(model_path), save_weights_only=False, verbose=1
+                        filepath=model_checkpoint_path,
+                        save_weights_only=False,
+                        verbose=1,
                     )
                     # SaveModelCallback(siamese_network, model_path, "model_{epoch}.tf"),
                     # tf.keras.callbacks.ProgbarLogger(),
