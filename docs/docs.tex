@@ -299,10 +299,12 @@ Di seguito i risultati delle inferenze:
             xtick=data,
             xlabel={Animal},
             ylabel={Similarity},
-            ymin=0.9993, ymax=1.0000,
+            ymin=0.9992, ymax=1.0000,  % Expanded range for visibility
             ymajorgrids=true,
-            mark size=2pt,
-            legend pos=south west
+            yticklabel style={/pgf/number format/.cd, fixed, precision=6},  % More decimal precision
+            bar width=8pt,
+            enlarge x limits=0.15,
+            legend pos=south west,
         ]
 
         % Positive Similarity
